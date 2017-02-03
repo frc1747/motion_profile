@@ -234,6 +234,16 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 					-(e.getY() - getHeight()/2)/scale - offy);
 			editIndex = -1;
 		}
+		else if(editMode == EditMode.DELETEPOINT) {Point mousePoint = new Point(e.getX(), e.getY());
+			for(int i = 0;i < waypoints.size();i++) {
+				Waypoint waypoint = waypoints.get(i);
+				if(		waypoint.getPointShape() != null &&
+						waypoint.getPointShape().contains(mousePoint)) {
+					waypoints.remove(i);
+					break;
+				}
+			}
+		}
 		else if(editMode == EditMode.ADDPOINT && e.getButton() == MouseEvent.BUTTON1) {
 			//Ensure the point is inside the area
 			if(	e.getX() >= 0 && e.getX() <= getWidth() &&
@@ -271,6 +281,19 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 						waypoint.getTangentShape().contains(mousePoint)) ||
 						(waypoint.getCurvatureShape() != null &&
 						waypoint.getCurvatureShape().contains(mousePoint))) {
+					inside = true;
+				}
+			}
+			if(inside)	setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+			else		cursorModeDefault();
+		}
+		else if(editMode == EditMode.DELETEPOINT) {
+			Point mousePoint = new Point(e.getX(), e.getY());
+			boolean inside = false;
+			for(int i = 0;i < waypoints.size();i++) {
+				Waypoint waypoint = waypoints.get(i);
+				if(		waypoint.getPointShape() != null &&
+						waypoint.getPointShape().contains(mousePoint)) {
 					inside = true;
 				}
 			}
