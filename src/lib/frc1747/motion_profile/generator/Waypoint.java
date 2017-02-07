@@ -14,6 +14,8 @@ public class Waypoint {
 	public double a_t;
 	public double a_m;
 	
+	public boolean reverse;
+	
 	private Shape pointShape;
 	private Shape tangentShape;
 	private Shape curvatureShape;
@@ -25,12 +27,26 @@ public class Waypoint {
 		v_m = 0;
 		a_t = 0;
 		a_m = 0;
+		reverse = false;
+	}
+	
+	public Waypoint getInverse() {
+		Waypoint waypoint = new Waypoint();
+		waypoint.x = x;
+		waypoint.y = y;
+		waypoint.v_t = v_t;
+		waypoint.v_m = -v_m;
+		waypoint.a_t = a_t;
+		waypoint.a_m = a_m;
+		waypoint.reverse = !reverse;
+		return waypoint;
 	}
 	
 	public void recalculateShapes(
 			double scale, double widgetSize,
 			double offx, double offy,
-			double width, double height) {
+			double width, double height,
+			double v_scale, double a_scale) {
 
 		double xpos = (x + offx) * scale + width/2;
 		double ypos = -(y + offy) * scale + height/2;
@@ -52,7 +68,7 @@ public class Waypoint {
 				diamondPoints, scale,
 				x + offx, y + offy,
 				width, height,
-				v_t, v_m);
+				v_t, v_m * v_scale);
 
 		// Calculate the curvature point shape
 		double trianglePoints[] = {
@@ -64,7 +80,7 @@ public class Waypoint {
 				trianglePoints, scale,
 				x + offx, y + offy,
 				width, height,
-				v_t + a_t, a_m);
+				v_t + a_t, a_m * a_scale);
 	}
 	
 	public Shape getPointShape() {

@@ -10,10 +10,12 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
+import lib.frc1747.motion_profile.generator.QuinticBezier;
 import lib.frc1747.motion_profile.generator.Waypoint;
 
 public class OfflineGeneratorPanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener {
@@ -24,10 +26,11 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 	//Everything drawn is offset by this vector
 	double offx;		// ft
 	double offy;		// ft
-	//Scroll ratio
+	//UI parameters
 	double scrollRatio = 0.8;
-	//Widget sizes
 	int widgetSize = 20;
+	double v_scale = 0.5;
+	double a_scale = 0.2;
 	
 	//Click pan location
 	int panClickX;
@@ -42,6 +45,7 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 	
 	//Waypoints
 	ArrayList<Waypoint> waypoints;
+	QuinticBezier spline[];
 	
 	public OfflineGeneratorPanel() {
 		//Display variables
@@ -66,6 +70,21 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 	
 	@Override
 	public void paintComponent(Graphics g2) {
+		//Recalculate splines
+		if(waypoints.size() >= 2) {
+			spline = new QuinticBezier[waypoints.size() - 1];
+			for(int i = 0;i < spline.length;i++) {
+				Waypoint wp1 = waypoints.get(i);
+				Waypoint wp2 = waypoints.get(i+1);
+				spline[i] = new QuinticBezier(
+						wp1.reverse ? wp1.getInverse() : wp1,
+						wp1.reverse ? wp2.getInverse() : wp2);
+			}
+		}
+		else {
+			spline = null;
+		}
+		
 		Graphics2D g = (Graphics2D)g2;
 		//Temp get width and height
 		int width = getWidth();
@@ -101,13 +120,40 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 		//Draw the waypoints
 		for(int i = 0;i < waypoints.size();i++) {
 			Waypoint waypoint = waypoints.get(i);
-			waypoint.recalculateShapes(scale, widgetSize, offx, offy, width, height);
+			waypoint.recalculateShapes(
+					scale, widgetSize,
+					offx, offy,
+					width, height,
+					v_scale, a_scale);
 			g.setColor(Color.BLUE);
 			g.draw(waypoint.getPointShape());
 			g.setColor(Color.RED);
 			g.draw(waypoint.getTangentShape());
 			g.setColor(Color.GREEN.darker());
 			g.draw(waypoint.getCurvatureShape());
+		}
+		
+		//Draw the splines
+		if(spline != null) {
+			//Share a transform
+			AffineTransform transform = new AffineTransform();
+			transform.translate(width/2 + .5, height/2 + .5);
+			transform.scale(scale, -scale);
+			transform.translate(offx, offy);
+			
+			g.setColor(Color.MAGENTA);
+			
+			for(int i = 0;i < spline.length;i++) {
+				//double[] points = spline[i].uniformTimeSample(0.01);
+				double[] points = spline[i].uniformTimeSample(.05);
+				//double[] points = spline[i].uniformLengthSample(0.05, 0.05);
+				transform.transform(points, 0, points, 0, points.length/2);
+				for(int j = 0;j < points.length/2 - 1;j++) {
+					g.drawLine(
+							(int)(points[j * 2]), (int)(points[j * 2 + 1]),
+							(int)(points[j * 2 + 2]), (int)(points[j * 2 + 3]));
+				}
+			}
 		}
 	}
 	
@@ -140,22 +186,24 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 	}
 	
 	private void setPointLocation(double posx, double posy) {
-		Waypoint waypoint = waypoints.get(editIndex/3);
-		if(editIndex % 3 == 0) {
-			waypoint.x = posx;
-			waypoint.y = posy;
-		}
-		else if(editIndex % 3 == 1) {
-			waypoint.v_m = Math.hypot(posx - waypoint.x, posy - waypoint.y);
-			waypoint.v_t = Math.atan2(posy - waypoint.y, posx - waypoint.x) - Math.PI/2;
-			if(waypoint.v_t < -Math.PI)	waypoint.v_t += Math.PI * 2;
-			if(waypoint.v_t > Math.PI) 	waypoint.v_t -= Math.PI * 2;
-		}
-		else if(editIndex % 3 == 2) {
-			waypoint.a_m = Math.hypot(posx - waypoint.x, posy - waypoint.y);
-			waypoint.a_t = Math.atan2(posy - waypoint.y, posx - waypoint.x) - Math.PI/2 - waypoint.v_t;
-			if(waypoint.a_t < -Math.PI)	waypoint.a_t += Math.PI * 2;
-			if(waypoint.a_t > Math.PI) 	waypoint.a_t -= Math.PI * 2;	
+		if(editIndex >= 0) {
+			Waypoint waypoint = waypoints.get(editIndex/3);
+			if(editIndex % 3 == 0) {
+				waypoint.x = posx;
+				waypoint.y = posy;
+			}
+			else if(editIndex % 3 == 1) {
+				waypoint.v_m = Math.hypot(posx - waypoint.x, posy - waypoint.y) / v_scale;
+				waypoint.v_t = Math.atan2(posy - waypoint.y, posx - waypoint.x) - Math.PI/2;
+				if(waypoint.v_t < -Math.PI)	waypoint.v_t += Math.PI * 2;
+				if(waypoint.v_t > Math.PI) 	waypoint.v_t -= Math.PI * 2;
+			}
+			else if(editIndex % 3 == 2) {
+				waypoint.a_m = Math.hypot(posx - waypoint.x, posy - waypoint.y) / a_scale;
+				waypoint.a_t = Math.atan2(posy - waypoint.y, posx - waypoint.x) - Math.PI/2 - waypoint.v_t;
+				if(waypoint.a_t < -Math.PI)	waypoint.a_t += Math.PI * 2;
+				if(waypoint.a_t > Math.PI) 	waypoint.a_t -= Math.PI * 2;	
+			}
 		}
 	}
 
@@ -173,9 +221,9 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 			Point mousePoint = new Point(e.getX(), e.getY());
 			for(int i = 0;i < waypoints.size();i++) {
 				Waypoint waypoint = waypoints.get(i);
-				if(		waypoint.getPointShape() != null &&
-						waypoint.getPointShape().contains(mousePoint)) {
-					editIndex = i * 3;
+				if(		waypoint.getCurvatureShape() != null &&
+						waypoint.getCurvatureShape().contains(mousePoint)) {
+					editIndex = i * 3 + 2;
 					break;
 				}
 				else if(	waypoint.getTangentShape() != null &&
@@ -183,9 +231,9 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 					editIndex = i * 3 + 1;
 					break;
 				}
-				else if(	waypoint.getCurvatureShape() != null &&
-							waypoint.getCurvatureShape().contains(mousePoint)) {
-					editIndex = i * 3 + 2;
+				else if(	waypoint.getPointShape() != null &&
+							waypoint.getPointShape().contains(mousePoint)) {
+					editIndex = i * 3;
 					break;
 				}
 			}
@@ -219,7 +267,7 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		if(editMode == EditMode.PAN) {
+		if(editMode == EditMode.PAN && e.getButton() == MouseEvent.BUTTON2) {
 			int newClickX = e.getX();
 			int newClickY = e.getY();
 
@@ -228,13 +276,25 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 
 			revertEditMode();
 		}
-		else if(editMode == EditMode.EDITPOINT) {
+		else if(editMode == EditMode.EDITPOINT && e.getButton() == MouseEvent.BUTTON1) {
 			setPointLocation(
 					(e.getX() - getWidth()/2)/scale - offx,
 					-(e.getY() - getHeight()/2)/scale - offy);
 			editIndex = -1;
 		}
-		else if(editMode == EditMode.DELETEPOINT) {Point mousePoint = new Point(e.getX(), e.getY());
+		else if(editMode == EditMode.EDITPOINT && e.getButton() == MouseEvent.BUTTON3) {
+			Point mousePoint = new Point(e.getX(), e.getY());
+			for(int i = 0;i < waypoints.size();i++) {
+				Waypoint waypoint = waypoints.get(i);
+				if(		waypoint.getPointShape() != null &&
+						waypoint.getPointShape().contains(mousePoint)) {
+					waypoints.get(i).reverse ^= true;
+					break;
+				}
+			}
+		}
+		else if(editMode == EditMode.DELETEPOINT && e.getButton() == MouseEvent.BUTTON1) {
+			Point mousePoint = new Point(e.getX(), e.getY());
 			for(int i = 0;i < waypoints.size();i++) {
 				Waypoint waypoint = waypoints.get(i);
 				if(		waypoint.getPointShape() != null &&
@@ -252,9 +312,13 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 				waypoint.x = (e.getX() - getWidth()/2)/scale - offx;
 				waypoint.y = -(e.getY() - getHeight()/2)/scale - offy;
 				waypoint.v_t = 0;
-				waypoint.v_m = 1;
+				waypoint.v_m = 2;
 				waypoint.a_t = -Math.PI/2;
-				waypoint.a_m = 1;
+				waypoint.a_m = 5;
+				if(waypoints.size() >= 1) {
+					waypoint.reverse = waypoints.get(waypoints.size() - 1).reverse;
+					System.out.println(waypoint.reverse);
+				}
 				waypoints.add(waypoint);
 			}
 		}
