@@ -1,4 +1,8 @@
-package lib.frc1747.motion_profile.gui;
+/**
+ * @author Tiger
+ */
+
+package lib.frc1747.motion_profile.gui._2d;
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -15,10 +19,14 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-import lib.frc1747.motion_profile.generator.QuinticBezier;
-import lib.frc1747.motion_profile.generator.Waypoint;
+import lib.frc1747.motion_profile.generator._2d.QuinticBezier;
+import lib.frc1747.motion_profile.generator._2d.SplineGenerator;
+import lib.frc1747.motion_profile.generator._2d.Waypoint;
+import lib.frc1747.motion_profile.gui._1d.OfflineProfileGeneratorPanel;
 
-public class OfflineGeneratorPanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class OfflineSplineGeneratorPanel
+		extends JPanel
+		implements MouseListener, MouseMotionListener, MouseWheelListener {
 	//Global draw scale
 	double scale;		// px/ft
 	//Global grid spacing
@@ -45,9 +53,12 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 	
 	//Waypoints
 	ArrayList<Waypoint> waypoints;
-	QuinticBezier spline[];
+	QuinticBezier splines[];
 	
-	public OfflineGeneratorPanel() {
+	//Output consumer
+	OfflineProfileGeneratorPanel profilePanel;
+	
+	public OfflineSplineGeneratorPanel() {
 		//Display variables
 		scale = 50;
 		spacing = 1;
@@ -68,23 +79,32 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 		waypoints = new ArrayList<>();
 	}
 	
-	@Override
-	public void paintComponent(Graphics g2) {
-		//Recalculate splines
+	public void recalculateSplines() {
 		if(waypoints.size() >= 2) {
-			spline = new QuinticBezier[waypoints.size() - 1];
-			for(int i = 0;i < spline.length;i++) {
-				Waypoint wp1 = waypoints.get(i);
-				Waypoint wp2 = waypoints.get(i+1);
-				spline[i] = new QuinticBezier(
-						wp1.reverse ? wp1.getInverse() : wp1,
-						wp1.reverse ? wp2.getInverse() : wp2);
+			splines = SplineGenerator.splinesFromWaypoints(
+					waypoints.toArray(new Waypoint[0]));
+			
+			double[][] profileSetpoints = SplineGenerator.flattenProfile(splines);
+			if(profilePanel != null) {
+				profilePanel.setProfileSetpoints(profileSetpoints);
 			}
+			/*
+			System.out.println("Profile Begin");
+			for(int i = 0;i < profileSetpoints.length;i++) {
+				System.out.println(
+						profileSetpoints[i][0] + "," +
+						profileSetpoints[i][1] + "," +
+						profileSetpoints[i][2]);
+			}
+			*/
 		}
 		else {
-			spline = null;
+			splines = null;
 		}
-		
+	}
+	
+	@Override
+	public void paintComponent(Graphics g2) {
 		Graphics2D g = (Graphics2D)g2;
 		//Temp get width and height
 		int width = getWidth();
@@ -134,7 +154,7 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 		}
 		
 		//Draw the splines
-		if(spline != null) {
+		if(splines != null) {
 			//Share a transform
 			AffineTransform transform = new AffineTransform();
 			transform.translate(width/2 + .5, height/2 + .5);
@@ -143,10 +163,8 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 			
 			g.setColor(Color.MAGENTA);
 			
-			for(int i = 0;i < spline.length;i++) {
-				//double[] points = spline[i].uniformTimeSample(0.01);
-				double[] points = spline[i].uniformTimeSample(.05);
-				//double[] points = spline[i].uniformLengthSample(0.05, 0.05);
+			for(int i = 0;i < splines.length;i++) {
+				double[] points = splines[i].uniformTimePositionSample(20);
 				transform.transform(points, 0, points, 0, points.length/2);
 				for(int j = 0;j < points.length/2 - 1;j++) {
 					g.drawLine(
@@ -241,6 +259,7 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 					(e.getX() - getWidth()/2)/scale - offx,
 					-(e.getY() - getHeight()/2)/scale - offy);
 		}
+		recalculateSplines();
 		repaint();
 	}
 
@@ -261,7 +280,8 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 					(e.getX() - getWidth()/2)/scale - offx,
 					-(e.getY() - getHeight()/2)/scale - offy);
 		}
-		
+
+		recalculateSplines();
 		repaint();
 	}
 
@@ -317,12 +337,12 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 				waypoint.a_m = 5;
 				if(waypoints.size() >= 1) {
 					waypoint.reverse = waypoints.get(waypoints.size() - 1).reverse;
-					System.out.println(waypoint.reverse);
 				}
 				waypoints.add(waypoint);
 			}
 		}
-		
+
+		recalculateSplines();
 		repaint();
 	}
 
@@ -378,5 +398,9 @@ public class OfflineGeneratorPanel extends JPanel implements MouseListener, Mous
 		offy = -(e.getY() - getHeight()/2)/scale - posy;
 		
 		repaint();
+	}
+
+	public void setProfilePanel(OfflineProfileGeneratorPanel profilePanel) {
+		this.profilePanel = profilePanel;
 	}
 }

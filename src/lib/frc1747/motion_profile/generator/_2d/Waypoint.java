@@ -1,4 +1,4 @@
-package lib.frc1747.motion_profile.generator;
+package lib.frc1747.motion_profile.generator._2d;
 
 import java.awt.Color;
 import java.awt.Polygon;
