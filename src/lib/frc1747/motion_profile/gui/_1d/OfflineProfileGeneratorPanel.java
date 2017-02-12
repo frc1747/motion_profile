@@ -19,7 +19,7 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		// Convert the segment data into point data
 		// ----------------------------------------
 		
-		// The format is [s0, v0, theta0, visited0, t0; s1, v0, theta1, visited1, t1; ...]
+		// The format is [s0, v0, vtheta0, visited0, t0; s1, v0, vtheta1, visited1, t1; ...]
 		double[][] profilePoints = new double[profileSetpoints.length+1][5];
 		profilePoints[0][0] = 0;
 		profilePoints[0][1] = 0;
@@ -32,7 +32,7 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 				profilePoints[i][1] = (profileSetpoints[i-1][1] + profileSetpoints[i][1])/2;
 			else
 				profilePoints[i][1] = 0;
-			profilePoints[i][2] = profilePoints[i-1][2] + profileSetpoints[i-1][2];
+			profilePoints[i][2] = profileSetpoints[i-1][2];
 			profilePoints[i][3] = 0;
 		}
 		
@@ -98,21 +98,20 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			double t = 2 * (st - s0)/(v0 + vt);
 			profilePoints[i][4] = profilePoints[i-1][4] + Math.abs(t);
 		}
-		
-		for(int i = 0;i < profilePoints.length;i++) {
-			//System.out.format("%.2f, %.2f\n", profilePoints[i][1], profilePoints[i][4]);
-		}
 
 		// Some times to use
 		double jerkFilterTime = a/j;
 		double profileTime = profilePoints[profilePoints.length-1][4] + jerkFilterTime;
 		
 		// The format is [a0, v0, s0; a1, v1, s1; ...]
-		double[][] timePoints = new double[(int)Math.ceil(profileTime / dt)][3];
+		double[] unfilteredVelocities = new double[(int)Math.ceil(profileTime / dt)];
+		double[][] timePoints = new double[unfilteredVelocities.length][3];
+		double[] angularUnfilteredVelocities = new double[unfilteredVelocities.length];
+		double[][] angularTimePoints = new double[unfilteredVelocities.length][3];
 		
 		// Populate the time parameterized profile
 		timePointsLoop:
-		for(int i = 0, k = 0;i < timePoints.length;i++) {
+		for(int i = 0, k = 0;i < unfilteredVelocities.length;i++) {
 			double t = i * dt;
 			while(profilePoints[k+1][4] < t) {
 				k++;
@@ -123,20 +122,58 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			
 			// The arc length exactly corresponds with a table value
 			if(t == profilePoints[k][4]) {
-				timePoints[i][1] = profilePoints[k][1];
+				unfilteredVelocities[i] = profilePoints[k][1];
+				angularUnfilteredVelocities[i] = profilePoints[k][2];
 			}
 			// Interpolate
 			else {
-				timePoints[i][1] = linearInterpolate(
+				unfilteredVelocities[i] = linearInterpolate(
 						t,
 						profilePoints[k][4], profilePoints[k+1][4],
 						profilePoints[k][1], profilePoints[k+1][1]);
+				angularUnfilteredVelocities[i] = linearInterpolate(
+						t,
+						profilePoints[k][4], profilePoints[k+1][4],
+						profilePoints[k][2], profilePoints[k+1][2]);
 			}
 		}
 		
+		// Apply the jerk boxcar filter
+		int jerkFilterWidth = (int)Math.ceil(jerkFilterTime/dt);
+		System.out.println(jerkFilterWidth);
+		for(int i = 0;i < unfilteredVelocities.length;i++) {
+			timePoints[i][1] = 0;
+			for(int k = Math.max(0, i - jerkFilterWidth + 1);k <= i;k++) {
+				timePoints[i][1] += unfilteredVelocities[k];
+			}
+			timePoints[i][1] /= jerkFilterWidth;
+			
+			angularTimePoints[i][1] = 0;
+			for(int k = Math.max(0, i - jerkFilterWidth + 1);k <= i;k++) {
+				angularTimePoints[i][1] += angularUnfilteredVelocities[k];
+			}
+			angularTimePoints[i][1] /= jerkFilterWidth;
+		}
+		
+		// Take the derivative to fill in the accelerations
+		for(int i = 0;i < timePoints.length-1;i++) {
+			timePoints[i][0] = (timePoints[i+1][1] - timePoints[i][1]) / dt;
+		}
+		for(int i = 0;i < angularTimePoints.length-1;i++) {
+			angularTimePoints[i][0] = (angularTimePoints[i+1][1] - angularTimePoints[i][1]) / dt;
+		}
+		
+		// Take the integral to fill in the positions
+		for(int i = 1;i < timePoints.length;i++) {
+			timePoints[i][2] = timePoints[i-1][2] + timePoints[i][1] * dt;
+		}
+		for(int i = 1;i < angularTimePoints.length;i++) {
+			angularTimePoints[i][2] = angularTimePoints[i-1][2] + angularTimePoints[i][1] * dt;
+		}
+		
 		System.out.println("BEGIN");
-		for(int i = 0;i < timePoints.length;i++) {
-			System.out.println(timePoints[i][1]);
+		for(int i = 0;i < unfilteredVelocities.length;i++) {
+			System.out.format("%.2f\t%.2f\t%.2f\t%.2f\n", i * dt, timePoints[i][0], timePoints[i][1], timePoints[i][2]);
 		}
 		//System.out.println(timePoints.length * dt);
 		
