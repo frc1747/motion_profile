@@ -145,7 +145,7 @@ public class QuinticBezier {
 			double s = i * sampleLength;
 
 			// Ensure that the interpolation is performed on the correct segment
-			while(s > lengthTable[j][1]) j++;
+			while(s > lengthTable[j+1][1]) j++;
 			
 			//Get splines time for the arc length from the table
 			double t = 0;

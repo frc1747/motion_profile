@@ -15,78 +15,140 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	 * The format is [ds0, vmax0, dtheta0; ds1, vmax1, dtheta1; ...]
 	 */
 	public void setProfileSetpoints(double[][] profileSetpoints) {
-		// Format is [t0, vslew0, theta0; t1, vslew1, theta1; ...]
-		double[][] breakPoints = new double[profileSetpoints.length+1][3];
-		breakPoints[0][0] = 0;
-		breakPoints[0][1] = profileSetpoints[0][1];
-		breakPoints[0][2] = 0;
-		for(int i = 0;i < breakPoints.length - 1;i++) {
-			breakPoints[i+1][1] = -profileSetpoints[i][1];
-			if(i < breakPoints.length - 2) {
-				breakPoints[i+1][1] += profileSetpoints[i+1][1];
+		// ----------------------------------------
+		// Convert the segment data into point data
+		// ----------------------------------------
+		
+		// The format is [s0, v0, theta0, visited0, t0; s1, v0, theta1, visited1, t1; ...]
+		double[][] profilePoints = new double[profileSetpoints.length+1][5];
+		profilePoints[0][0] = 0;
+		profilePoints[0][1] = 0;
+		profilePoints[0][2] = 0;
+		profilePoints[0][3] = 0;
+		profilePoints[0][4] = 0;
+		for(int i = 1;i < profilePoints.length;i++) {
+			profilePoints[i][0] = profilePoints[i-1][0] + profileSetpoints[i-1][0];
+			if(i < profilePoints.length-1)
+				profilePoints[i][1] = (profileSetpoints[i-1][1] + profileSetpoints[i][1])/2;
+			else
+				profilePoints[i][1] = 0;
+			profilePoints[i][2] = profilePoints[i-1][2] + profileSetpoints[i-1][2];
+			profilePoints[i][3] = 0;
+		}
+		
+		// ----------------------------------------
+		// Adjust the speeds of each point so that the acceleration is limited
+		// 1. Find the point that is closest to the zero velocity line
+		// 2. For each immediate neighbor that is further from the zero velocity line
+		// 3. Adjust its velocity if its too high
+		// 4. Repeat from 1 until no points are left
+		// ----------------------------------------
+		double a = 20;
+		double j = 50;
+		double dt = 0.02;
+		for(;;) {
+			// Attempt to find an unvisited point that is closest to the zero velocity line
+			int index = -1;
+			for(int i = 0;i < profilePoints.length;i++) {
+				if(	profilePoints[i][3] == 0 &&			//Not visited yet
+					(index < 0 ||						//and there is no minimum velocity point yet, or ...
+					Math.abs(profilePoints[i][1]) <		//the current point has a lower velocity
+					Math.abs(profilePoints[index][1]))) {
+					index = i;
+				}
 			}
-			breakPoints[i+1][0] = breakPoints[i][0] + Math.abs(profileSetpoints[i][0] / profileSetpoints[i][1]);
-			breakPoints[i+1][2] = breakPoints[i][2] + profileSetpoints[i][2];
+			// We have adjusted all points
+			if(index < 0) 
+				break;
+			
+			// Adjust the left neighbor
+			if(index > 0) {
+				double vo = profilePoints[index][1];
+				double ds = profilePoints[index-1][0] - profilePoints[index][0];
+				double vt = profilePoints[index-1][1];
+				double vt2 = -Math.signum(ds) * Math.sqrt(vo * vo + 2 * a * Math.abs(ds));
+				if(Math.abs(vt2) < Math.abs(vt))
+					profilePoints[index-1][1] = vt2;
+			}
+			
+			// Adjust the right neighbor
+			if(index < profilePoints.length-1) {
+				double vo = profilePoints[index][1];
+				double ds = profilePoints[index+1][0] - profilePoints[index][0];
+				double vt = profilePoints[index+1][1];
+				double vt2 = Math.signum(ds) * Math.sqrt(vo * vo + 2 * a * Math.abs(ds));
+				if(Math.abs(vt2) < Math.abs(vt))
+					profilePoints[index+1][1] = vt2;
+			}
+			
+			// Mark this point as visited
+			profilePoints[index][3] = 1;
+		}
+		
+		// ----------------------------------------
+		// Time parameterize the profile
+		// ----------------------------------------
+		
+		// Add times to the profile
+		for(int i = 1;i < profilePoints.length;i++) {
+			double v0 = profilePoints[i-1][1];
+			double vt = profilePoints[i][1];
+			double s0 = profilePoints[i-1][0];
+			double st = profilePoints[i][0];
+			double t = 2 * (st - s0)/(v0 + vt);
+			profilePoints[i][4] = profilePoints[i-1][4] + Math.abs(t);
+		}
+		
+		for(int i = 0;i < profilePoints.length;i++) {
+			//System.out.format("%.2f, %.2f\n", profilePoints[i][1], profilePoints[i][4]);
 		}
 
-		System.out.println("Profile Begin");
+		// Some times to use
+		double jerkFilterTime = a/j;
+		double profileTime = profilePoints[profilePoints.length-1][4] + jerkFilterTime;
 		
-		for(int i = 0;i < breakPoints.length;i++) {
-			System.out.println(breakPoints[i][0] + "," + breakPoints[i][1] + "," + breakPoints[i][2]);
-		}
-		System.out.println("--------------------");
+		// The format is [a0, v0, s0; a1, v1, s1; ...]
+		double[][] timePoints = new double[(int)Math.ceil(profileTime / dt)][3];
 		
-		double vmax = 12;
-		double amax = 25;
-		double dt = 0.02;
-		double wmax = 15.0 / 8.0 * vmax / amax + dt * 2;
-		double total_time = breakPoints[breakPoints.length-1][0] + wmax;
-		double accelerations[] = new double[(int)Math.ceil(total_time/dt)];
-		
-		for(int i = 0;i < breakPoints.length;i++) {
-			double toff = (wmax/2 + breakPoints[i][0])/dt;
-			double vslew = breakPoints[i][1];
-			double w = 15.0 / 8.0 * Math.abs(vslew) / amax;
-			int half_width = (int)Math.ceil(w/dt/2);
-			double accels[] = new double[half_width * 2 + 1];
-			double area = 0;
-			for(int j = -half_width;j <= half_width;j++) {
-				double t = j * dt;
-				accels[j + half_width] = amax * (
-						16 * (t * t * t * t) / (w * w * w * w) -
-						8 * (t * t) / (w * w) +
-						1) * (vslew > 0 ? 1 : -1);
-				area += accels[j + half_width] * dt;
+		// Populate the time parameterized profile
+		timePointsLoop:
+		for(int i = 0, k = 0;i < timePoints.length;i++) {
+			double t = i * dt;
+			while(profilePoints[k+1][4] < t) {
+				k++;
+				// We done generating the profile
+				if(k >= profilePoints.length-1)
+					break timePointsLoop;
 			}
-			double ratio = vslew / area;
-			for(int j = -half_width;j <= half_width;j++) {
-				int k = (int)Math.round(j + toff);
-				accelerations[k] += accels[j + half_width] * ratio;
+			
+			// The arc length exactly corresponds with a table value
+			if(t == profilePoints[k][4]) {
+				timePoints[i][1] = profilePoints[k][1];
+			}
+			// Interpolate
+			else {
+				timePoints[i][1] = linearInterpolate(
+						t,
+						profilePoints[k][4], profilePoints[k+1][4],
+						profilePoints[k][1], profilePoints[k+1][1]);
 			}
 		}
 		
-		double velocities[] = new double[accelerations.length];
-		velocities[0] = 0;
-		for(int i = 1;i < accelerations.length;i++) {
-			velocities[i] = velocities[i-1] + accelerations[i-1] * dt;
+		System.out.println("BEGIN");
+		for(int i = 0;i < timePoints.length;i++) {
+			System.out.println(timePoints[i][1]);
 		}
-		double positions[] = new double[velocities.length];
-		positions[0] = 0;
-		for(int i = 1;i < velocities.length;i++) {
-			positions[i] = positions[i-1] + velocities[i-1] * dt;
-		}
-		
-		double max = 0;
-		double min = 0;
-		for(int i = 0;i < accelerations.length;i++) {
-			if(accelerations[i] > max) max = accelerations[i];
-			if(accelerations[i] < min) min = accelerations[i];
-			System.out.println(accelerations[i] + "," + velocities[i] + "," + positions[i]);
-		}
-		//System.out.println(min);
-		//System.out.println(max);
+		//System.out.println(timePoints.length * dt);
 		
 		repaint();
+	}
+	
+	// Basic linear interpolation function
+	public double linearInterpolate(
+			double input,
+			double in_min, double in_max,
+			double out_min, double out_max) {
+		return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 	}
 
 	@Override
