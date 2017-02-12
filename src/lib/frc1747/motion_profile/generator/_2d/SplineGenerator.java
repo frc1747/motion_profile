@@ -25,7 +25,7 @@ public class SplineGenerator {
 		double[][][] profileAccumulator = new double[splines.length][][];
 		int profileLength = 0;
 		for(int i = 0;i < splines.length;i++) {
-			profileAccumulator[i] = splines[i].uniformLengthSegmentData(20, 0.5, 12, 3);
+			profileAccumulator[i] = splines[i].uniformLengthSegmentData(20, .1, 12, 3);
 			profileLength += profileAccumulator[i].length;
 		}
 		//ds, vmax
