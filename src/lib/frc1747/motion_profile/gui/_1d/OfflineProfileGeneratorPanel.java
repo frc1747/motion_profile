@@ -1,14 +1,22 @@
 package lib.frc1747.motion_profile.gui._1d;
 
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.GridLayout;
 
 import javax.swing.JPanel;
 
 public class OfflineProfileGeneratorPanel extends JPanel {
+	private SingleGraphPanel translationalPanel;
+	private SingleGraphPanel rotationalPanel;
 
 	public OfflineProfileGeneratorPanel() {
+		setLayout(new GridLayout(2, 1));
 		
+		translationalPanel = new SingleGraphPanel("Translation");
+		translationalPanel.setUnits("ft", "s");
+		add(translationalPanel);
+		rotationalPanel = new SingleGraphPanel("Rotation");
+		rotationalPanel.setUnits("rad", "s");
+		add(rotationalPanel);
 	}
 	
 	/**
@@ -28,12 +36,22 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		profilePoints[0][4] = 0;
 		for(int i = 1;i < profilePoints.length;i++) {
 			profilePoints[i][0] = profilePoints[i-1][0] + profileSetpoints[i-1][0];
-			if(i < profilePoints.length-1)
+			if(i < profilePoints.length-1) {
 				profilePoints[i][1] = (profileSetpoints[i-1][1] + profileSetpoints[i][1])/2;
-			else
+				double ds = (profileSetpoints[i-1][0] + profileSetpoints[i][0])/2;
+				double dtheta = (profileSetpoints[i-1][2] + profileSetpoints[i][2])/2;
+				profilePoints[i][2] = profilePoints[i][1] * dtheta / ds;
+			}
+			else {
 				profilePoints[i][1] = 0;
-			profilePoints[i][2] = profileSetpoints[i-1][2];
+				profilePoints[i][2] = 0;
+			}
 			profilePoints[i][3] = 0;
+		}
+		for(int i = 1;i < profilePoints.length;i++) {
+			if(Math.abs(profilePoints[i][2]) > 12 * 2.0/3) {
+				profilePoints[i][2] = profilePoints[i-1][2];
+			}
 		}
 		
 		// ----------------------------------------
@@ -44,6 +62,7 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		// 4. Repeat from 1 until no points are left
 		// ----------------------------------------
 		double a = 20;
+		double v = 12;
 		double j = 50;
 		double dt = 0.02;
 		for(;;) {
@@ -67,8 +86,10 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 				double ds = profilePoints[index-1][0] - profilePoints[index][0];
 				double vt = profilePoints[index-1][1];
 				double vt2 = -Math.signum(ds) * Math.sqrt(vo * vo + 2 * a * Math.abs(ds));
-				if(Math.abs(vt2) < Math.abs(vt))
+				if(Math.abs(vt2) < Math.abs(vt)) {
 					profilePoints[index-1][1] = vt2;
+					profilePoints[index-1][2] *= vt2/vt;
+				}
 			}
 			
 			// Adjust the right neighbor
@@ -77,12 +98,18 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 				double ds = profilePoints[index+1][0] - profilePoints[index][0];
 				double vt = profilePoints[index+1][1];
 				double vt2 = Math.signum(ds) * Math.sqrt(vo * vo + 2 * a * Math.abs(ds));
-				if(Math.abs(vt2) < Math.abs(vt))
+				if(Math.abs(vt2) < Math.abs(vt)) {
 					profilePoints[index+1][1] = vt2;
+					profilePoints[index+1][2] *= vt2/vt;
+				}
 			}
 			
 			// Mark this point as visited
 			profilePoints[index][3] = 1;
+		}
+		
+		for(int i = 0;i < profilePoints.length;i++) {
+			//System.out.println(profilePoints[i][2]);
 		}
 		
 		// ----------------------------------------
@@ -140,7 +167,6 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		
 		// Apply the jerk boxcar filter
 		int jerkFilterWidth = (int)Math.ceil(jerkFilterTime/dt);
-		System.out.println(jerkFilterWidth);
 		for(int i = 0;i < unfilteredVelocities.length;i++) {
 			timePoints[i][1] = 0;
 			for(int k = Math.max(0, i - jerkFilterWidth + 1);k <= i;k++) {
@@ -159,23 +185,40 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		for(int i = 0;i < timePoints.length-1;i++) {
 			timePoints[i][0] = (timePoints[i+1][1] - timePoints[i][1]) / dt;
 		}
+		double aamax = 0;
 		for(int i = 0;i < angularTimePoints.length-1;i++) {
 			angularTimePoints[i][0] = (angularTimePoints[i+1][1] - angularTimePoints[i][1]) / dt;
+			if(Math.abs(angularTimePoints[i][0]) > aamax)
+				aamax = Math.abs(angularTimePoints[i][0]);
 		}
 		
 		// Take the integral to fill in the positions
+		double xmax = 0;
 		for(int i = 1;i < timePoints.length;i++) {
 			timePoints[i][2] = timePoints[i-1][2] + timePoints[i][1] * dt;
+			if(Math.abs(timePoints[i][2]) > xmax)
+				xmax = Math.abs(timePoints[i][2]);
 		}
+		double axmax = 0;
 		for(int i = 1;i < angularTimePoints.length;i++) {
 			angularTimePoints[i][2] = angularTimePoints[i-1][2] + angularTimePoints[i][1] * dt;
+			if(Math.abs(angularTimePoints[i][2]) > axmax)
+				axmax = Math.abs(angularTimePoints[i][2]);
+		}
+		
+		// Find the max angular velocity
+		double avmax = 0;
+		for(int i = 1;i < angularTimePoints.length;i++) {
+			if(Math.abs(angularTimePoints[i][1]) > avmax)
+				avmax = Math.abs(angularTimePoints[i][1]);
 		}
 		
 		System.out.println("BEGIN");
 		for(int i = 0;i < unfilteredVelocities.length;i++) {
-			System.out.format("%.2f\t%.2f\t%.2f\t%.2f\n", i * dt, timePoints[i][0], timePoints[i][1], timePoints[i][2]);
+			//System.out.format("%.2f\t%.2f\t%.2f\t%.2f\n", i * dt, angularTimePoints[i][0], angularTimePoints[i][1], angularTimePoints[i][2]);
 		}
-		//System.out.println(timePoints.length * dt);
+		translationalPanel.setProfile(timePoints, dt, a, v, xmax, timePoints.length * dt);
+		rotationalPanel.setProfile(angularTimePoints, dt, aamax, avmax, axmax, timePoints.length * dt);
 		
 		repaint();
 	}
@@ -186,11 +229,5 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			double in_min, double in_max,
 			double out_min, double out_max) {
 		return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-	}
-
-	@Override
-	public void paintComponent(Graphics g2) {
-		Graphics2D g = (Graphics2D)g2;
-		
 	}
 }

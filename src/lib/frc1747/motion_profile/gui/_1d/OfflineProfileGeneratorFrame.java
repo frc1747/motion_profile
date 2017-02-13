@@ -7,6 +7,7 @@ public class OfflineProfileGeneratorFrame extends JFrame {
 	
 	public OfflineProfileGeneratorFrame() {
 		panel = new OfflineProfileGeneratorPanel();
+		add(panel);
 		setSize(800, 600);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setTitle("Offline Motion Profile Generator");
