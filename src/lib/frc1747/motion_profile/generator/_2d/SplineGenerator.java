@@ -19,17 +19,22 @@ public class SplineGenerator {
 		
 		return splines;
 	}
-	
+
+	/**
+	 * The format is [ds0, dtheta0, vmax0, amax0; ds1, dtheta1, vmax1, amax1; ...]
+	 * ds, dtheta, vmax are signed
+	 * amax is unsigned
+	 */
 	public static double[][] flattenProfile(QuinticBezier[] splines) {
 		//Flatten the 2d profile -> 1d profile
 		double[][][] profileAccumulator = new double[splines.length][][];
 		int profileLength = 0;
 		for(int i = 0;i < splines.length;i++) {
-			profileAccumulator[i] = splines[i].uniformLengthSegmentData(20, .1, 12, 3);
+			profileAccumulator[i] = splines[i].uniformLengthSegmentData(100, .01, 12, 20, 3);
 			profileLength += profileAccumulator[i].length;
 		}
 		//ds, vmax
-		double[][] profileSetpoints = new double[profileLength][3];
+		double[][] profileSetpoints = new double[profileLength][4];
 		//i -> which profile range to use
 		//j -> the beginning index of the profile range
 		for(int i = 0,j = 0;i < profileAccumulator.length;i++) {

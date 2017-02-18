@@ -120,13 +120,17 @@ public class QuinticBezier {
 	 * @param timeSampleCount - The number of equal time segments to initially estimate
 	 * @param sampleLength - The target arc length of the output segments
 	 * @param vmax - The maximum robot velocity
+	 * @param avmax - The maximum robot angular velocity
 	 * @param width - The width of the robot
 	 * @return A flattened profile in the form delta arc length, velocity max, and delta theta.<br>
-	 * The format is [ds0, vmax0, dtheta0; ds1, vmax1, dtheta1; ...]
+	 * The format is [ds0, dtheta0, vmax0, amax0; ds1, dtheta1, vmax1, amax1; ...]
+	 * ds, dtheta, vmax are signed
+	 * amax is unsigned
 	 */
 	public double[][] uniformLengthSegmentData(
 			int timeSampleCount, double sampleLength,
-			double vmax, double width) {
+			double vmax, double amax,
+			double width) {
 		// Adjust the sampleLength in order to make it exactly fit the arc length
 		double totalLength = uniformTimeArcLength(timeSampleCount);
 		int samples = (int)Math.ceil(totalLength / sampleLength);
@@ -135,7 +139,7 @@ public class QuinticBezier {
 		//Create the length->u lookup table
 		double[][] lengthTable = uniformTimeArcLengthSample(samples * 5);
 		//Create the output array
-		double[][] output = new double[samples][3];
+		double[][] output = new double[samples][4];
 
 		//i -> current segment
 		//j -> position in lookup table
@@ -145,7 +149,13 @@ public class QuinticBezier {
 			double s = i * sampleLength;
 
 			// Ensure that the interpolation is performed on the correct segment
-			while(s > lengthTable[j+1][1]) j++;
+			while(lengthTable[j+1][1] < s) {
+				j++;
+				if(j > lengthTable.length-2) {
+					j = lengthTable.length-2;
+					break;
+				}
+			}
 			
 			//Get splines time for the arc length from the table
 			double t = 0;
@@ -167,9 +177,9 @@ public class QuinticBezier {
 				double dtheta = getHeading(t) - getHeading(old_t);
 				if(dtheta < -Math.PI) dtheta += Math.PI * 2;
 				if(dtheta >  Math.PI) dtheta -= Math.PI * 2;
-				output[i-1][2] = dtheta;
-				dtheta = Math.abs(dtheta);
-				output[i-1][1] = vmax/(1.0 + (dtheta * width)/(sampleLength * 2)) * (reverse ? -1 : 1);
+				output[i-1][1] = dtheta;
+				output[i-1][2] = vmax/(1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2)) * (reverse ? -1 : 1);
+				output[i-1][3] = amax/(1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2));
 			}
 			old_t = t;
 		}
@@ -177,9 +187,11 @@ public class QuinticBezier {
 		double dtheta = getHeading(1) - getHeading(old_t);
 		if(dtheta < -Math.PI) dtheta += Math.PI * 2;
 		if(dtheta >  Math.PI) dtheta -= Math.PI * 2;
-		output[samples-1][2] = dtheta;
+		output[samples-1][1] = dtheta;
 		dtheta = Math.abs(dtheta);
-		output[samples-1][1] = vmax/(1.0 + (dtheta * width)/(sampleLength * 2)) * (reverse ? -1 : 1);
+		output[samples-1][2] = vmax/(1.0 + (dtheta * width)/(sampleLength * 2)) * (reverse ? -1 : 1);
+		output[samples-1][3] = amax/(1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2));
+		
 		return output;
 	}
 	
