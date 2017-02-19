@@ -30,6 +30,12 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		double j = 50;
 		double w = 3;
 		double dt = 0.05;
+
+		// ----------------------------------------
+		// Finish the max acceleration data
+		// ----------------------------------------
+		
+		
 		// ----------------------------------------
 		// Convert the segment data into point data
 		// ----------------------------------------
@@ -126,7 +132,6 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		double profileTime = profilePoints[profilePoints.length-1][5];
 		
 		// The format is [a0, v0, s0; a1, v1, s1; ...]
-		//double[] unfilteredVelocities = new double[(int)Math.ceil(profileTime / dt)];
 		double[][] timePoints = new double[(int)Math.ceil(profileTime / dt)][3];
 		
 		// Populate the time parameterized profile
@@ -155,23 +160,13 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		}
 		
 		// Take the derivative to fill in the accelerations
-		for(int i = 0;i < timePoints.length-1;i++) {
-			timePoints[i][0] = (timePoints[i+1][1] - timePoints[i][1]) / dt;
+		for(int i = 1;i < timePoints.length-1;i++) {
+			timePoints[i][0] = (timePoints[i+1][1] - timePoints[i-1][1]) / dt / 2;
 		}
 		
 		// Take the integral to fill in the positions
 		double xmax = 0;
-		positionPointsLoop:
 		for(int i = 1, k = 0;i < timePoints.length;i++) {
-			double t = i * dt;
-			while(profilePoints[k+1][5] < t) {
-				k++;
-				// We done generating the profile
-				if(k > profilePoints.length-2) {
-					break positionPointsLoop;
-				}
-			}
-			
 			timePoints[i][2] = timePoints[i-1][2] + (timePoints[i-1][1] + timePoints[i][1])/2 * dt;
 			if(Math.abs(timePoints[i][2]) > xmax)
 				xmax = Math.abs(timePoints[i][2]);
@@ -207,26 +202,22 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		}
 
 		// Take the derivative to fill in the velocities
-		for(int i = 0;i < angularTimePoints.length-1;i++) {
-			angularTimePoints[i][1] = (angularTimePoints[i+1][2] - angularTimePoints[i][2]) / dt;
+		for(int i = 1;i < angularTimePoints.length-1;i++) {
+			angularTimePoints[i][1] = (angularTimePoints[i+1][2] - angularTimePoints[i-1][2]) / dt / 2;
 		}
 		
 		// Take the derivative to fill in the accelerations
-		for(int i = 0;i < angularTimePoints.length-1;i++) {
-			angularTimePoints[i][0] = (angularTimePoints[i+1][1] - angularTimePoints[i][1]) / dt;
+		for(int i = 1;i < angularTimePoints.length-1;i++) {
+			angularTimePoints[i][0] = (angularTimePoints[i+1][1] - angularTimePoints[i-1][1]) / dt / 2;
 		}
 		
-		/*
-		// Apply the jerk boxcar filter
-		int jerkFilterWidth = (int)Math.ceil(jerkFilterTime/dt);
-		for(int i = 0;i < unfilteredVelocities.length;i++) {
-			timePoints[i][1] = 0;
-			for(int k = Math.max(0, i - jerkFilterWidth + 1);k <= i;k++) {
-				timePoints[i][1] += unfilteredVelocities[k];
-			}
-			timePoints[i][1] /= jerkFilterWidth;
+		double[] ts = new double[timePoints.length];
+		for(int i = 0;i < timePoints.length;i++) {
+			//System.out.format("%.2f %.2f\n", timePoints[i][0], angularTimePoints[i][0]);
+			
 		}
-		*/
+		
+		//timePoints = BoxcarFilter.multiFilter(timePoints, (int)Math.ceil(jerkFilterTime/dt));
 		
 		System.out.println("BEGIN");
 		

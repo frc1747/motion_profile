@@ -178,9 +178,16 @@ public class QuinticBezier {
 				if(dtheta < -Math.PI) dtheta += Math.PI * 2;
 				if(dtheta >  Math.PI) dtheta -= Math.PI * 2;
 				output[i-1][1] = dtheta;
-				output[i-1][2] = vmax/(1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2)) * (reverse ? -1 : 1);
-				output[i-1][3] = amax/(1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2));
+				output[i-1][2] = 1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2);
+				//output[i-1][3] = amax/(1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2));
+				output[i-1][3] = amax;
 			}
+			
+			if(i > 1) {
+				double ddtheta = output[i-1][1] - output[i-2][1];
+				output[i-2][2] += (Math.abs(ddtheta) * width)/(sampleLength * sampleLength * 2);
+			}
+			
 			old_t = t;
 		}
 		
@@ -188,9 +195,24 @@ public class QuinticBezier {
 		if(dtheta < -Math.PI) dtheta += Math.PI * 2;
 		if(dtheta >  Math.PI) dtheta -= Math.PI * 2;
 		output[samples-1][1] = dtheta;
-		dtheta = Math.abs(dtheta);
-		output[samples-1][2] = vmax/(1.0 + (dtheta * width)/(sampleLength * 2)) * (reverse ? -1 : 1);
-		output[samples-1][3] = amax/(1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2));
+		output[samples-1][2] = 1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2);
+		//output[samples-1][3] = amax/(1.0 + (Math.abs(dtheta) * width)/(sampleLength * 2));
+		output[samples-1][3] = amax;
+
+		/*
+		double ddtheta = output[1][1] - output[0][1];
+		output[0][3] = amax/(1.0 + (Math.abs(ddtheta) * width)/(sampleLength * sampleLength * 4));
+		for(int i = 1;i < output.length-1;i++) {
+			ddtheta = output[i+1][1] - output[i-1][1];
+			output[i-1][3] = amax/(1.0 + (Math.abs(ddtheta) * width)/(sampleLength * sampleLength * 4));
+		}	
+		ddtheta = output[output.length-1][1] - output[output.length-2][1];
+		output[output.length-1][3] = amax/(1.0 + (Math.abs(ddtheta) * width)/(sampleLength * sampleLength * 4));
+		*/
+		
+		for(int i = 0;i < output.length;i++) {
+			output[i][2] = vmax/output[i][2] * (reverse ? -1 : 1);
+		}
 		
 		return output;
 	}
