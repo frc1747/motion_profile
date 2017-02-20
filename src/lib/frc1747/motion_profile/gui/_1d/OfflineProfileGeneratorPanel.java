@@ -20,45 +20,58 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	}
 	
 	/**
-	 * The format is [ds0, dtheta0, vmax0, avmax0, amax0; ds1, dtheta1, vmax1, avmax1, amax0; ...]
-	 * ds, dtheta, vmax, avmax are signed
-	 * amax is zero
+	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	 */
-	public void setProfileSetpoints(double[][] profileSetpoints) {
-		double a = 20;
-		double v = 12;
-		double j = 50;
-		double w = 3;
+	public void setProfileSetpoints(double[][] profileSegments) {
+		double amax = 20;
+		double vmax = 12;
+		double jmax = 50;
+		double r_width = 3;
 		double dt = 0.05;
 
-		// ----------------------------------------
-		// Finish the max acceleration data
-		// ----------------------------------------
-		
-		
 		// ----------------------------------------
 		// Convert the segment data into point data
 		// ----------------------------------------
 		
 		// The format is [s0, theta0, v0, a0, visited0, t0; s1, theta1, v1, a1, visited1, t1; ...]
-		double[][] profilePoints = new double[profileSetpoints.length+1][7];
+		int length = profileSegments.length+1;
+		double[][] profilePoints = new double[length][7];
+		
+		// Fill out the arc length and angles
 		profilePoints[0][0] = 0;
 		profilePoints[0][1] = 0;
-		profilePoints[0][2] = 0;
-		profilePoints[0][3] = 0;
-		profilePoints[0][4] = 0;
-		profilePoints[0][5] = 0;
-		for(int i = 1;i < profilePoints.length;i++) {
-			profilePoints[i][0] = profilePoints[i-1][0] + profileSetpoints[i-1][0];
-			profilePoints[i][1] = profilePoints[i-1][1] + profileSetpoints[i-1][1];
-			if(i < profilePoints.length-1) {
-				profilePoints[i][2] = (profileSetpoints[i-1][2] + profileSetpoints[i][2])/2;
-				profilePoints[i][3] = (profileSetpoints[i-1][3] + profileSetpoints[i][3])/2;
-			}
-			else {
-				profilePoints[i][2] = 0;
-				profilePoints[i][3] = 0;
-			}
+		for(int i = 1;i < length;i++) {
+			profilePoints[i][0] = profilePoints[i-1][0] + profileSegments[i-1][0];
+			profilePoints[i][1] = profilePoints[i-1][1] + profileSegments[i-1][1];
+		}
+		
+		// Fill out the max velocities and accelerations
+		for(int i = 0;i < length;i++) {
+			
+			// Calculate ds
+			double ds = 0;
+			if(i > 0) ds += profileSegments[i-1][0];
+			if(i < length-1) ds += profileSegments[i][0];
+			ds = Math.abs(ds) / 2;
+			
+			// Calculate dtheta
+			double dtheta = 0;
+			if(i > 0) dtheta += profileSegments[i-1][1];
+			if(i < length-1) dtheta += profileSegments[i][1];
+			dtheta = Math.abs(dtheta) / 2;
+			
+			// Calculate ddtheta
+			double ddtheta = 0;
+			if(i > 0) ddtheta -= profileSegments[i-1][1];
+			if(i < length-1) ddtheta += profileSegments[i][1];
+			ddtheta = Math.abs(ddtheta);
+
+			profilePoints[i][2] = vmax/(1 + r_width/2 * (dtheta/ds + ddtheta/ds/ds));
+			profilePoints[i][3] = vmax/(1 + r_width/2 * (dtheta/ds + ddtheta/ds/ds));
+		}
+		
+		// Fill out the times and visited flags
+		for(int i = 0;i < length;i++) {
 			profilePoints[i][4] = 0;
 			profilePoints[i][5] = 0;
 		}
@@ -128,7 +141,7 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		}
 
 		// Some times to use
-		double jerkFilterTime = a/j;
+		double jerkFilterTime = amax/jmax;
 		double profileTime = profilePoints[profilePoints.length-1][5];
 		
 		// The format is [a0, v0, s0; a1, v1, s1; ...]
@@ -221,8 +234,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		
 		System.out.println("BEGIN");
 		
-		translationalPanel.setProfile(timePoints, dt, a, v, xmax, timePoints.length * dt);
-		rotationalPanel.setProfile(angularTimePoints, dt, a/w*2, v/w*2, axmax, timePoints.length * dt);
+		translationalPanel.setProfile(timePoints, dt, amax, vmax, xmax, timePoints.length * dt);
+		rotationalPanel.setProfile(angularTimePoints, dt, amax/r_width*2, vmax/r_width*2, axmax, timePoints.length * dt);
 		
 		repaint();
 	}
