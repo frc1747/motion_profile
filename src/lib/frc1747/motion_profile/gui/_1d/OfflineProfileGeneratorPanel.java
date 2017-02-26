@@ -179,7 +179,7 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		
 		// Take the integral to fill in the positions
 		double xmax = 0;
-		for(int i = 1, k = 0;i < timePoints.length;i++) {
+		for(int i = 1;i < timePoints.length;i++) {
 			timePoints[i][2] = timePoints[i-1][2] + (timePoints[i-1][1] + timePoints[i][1])/2 * dt;
 			if(Math.abs(timePoints[i][2]) > xmax)
 				xmax = Math.abs(timePoints[i][2]);
@@ -224,15 +224,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			angularTimePoints[i][0] = (angularTimePoints[i+1][1] - angularTimePoints[i-1][1]) / dt / 2;
 		}
 		
-		double[] ts = new double[timePoints.length];
-		for(int i = 0;i < timePoints.length;i++) {
-			//System.out.format("%.2f %.2f\n", timePoints[i][0], angularTimePoints[i][0]);
-			
-		}
-		
-		//timePoints = BoxcarFilter.multiFilter(timePoints, (int)Math.ceil(jerkFilterTime/dt));
-		
-		System.out.println("BEGIN");
+		timePoints = BoxcarFilter.multiFilter(timePoints, (int)Math.ceil(jerkFilterTime/dt));
+		angularTimePoints = BoxcarFilter.multiFilter(angularTimePoints, (int)Math.ceil(jerkFilterTime/dt));
 		
 		translationalPanel.setProfile(timePoints, dt, amax, vmax, xmax, timePoints.length * dt);
 		rotationalPanel.setProfile(angularTimePoints, dt, amax/r_width*2, vmax/r_width*2, axmax, timePoints.length * dt);
