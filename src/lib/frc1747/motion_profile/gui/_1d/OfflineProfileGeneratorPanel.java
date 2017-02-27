@@ -1,12 +1,18 @@
 package lib.frc1747.motion_profile.gui._1d;
 
 import java.awt.GridLayout;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.swing.JPanel;
 
 public class OfflineProfileGeneratorPanel extends JPanel {
 	private SingleGraphPanel translationalPanel;
 	private SingleGraphPanel rotationalPanel;
+	
+	private String fileName = "C:\\Users\\Tiger\\Documents\\MotionProfiling\\gear_profile.csv";
+	private double[][] savedTimePoints;
+	private double[][] savedAngularTimePoints;
 
 	public OfflineProfileGeneratorPanel() {
 		setLayout(new GridLayout(2, 1));
@@ -230,7 +236,26 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		translationalPanel.setProfile(timePoints, dt, amax, vmax, xmax, timePoints.length * dt);
 		rotationalPanel.setProfile(angularTimePoints, dt, amax/r_width*2, vmax/r_width*2, axmax, timePoints.length * dt);
 		
+		savedTimePoints = timePoints;
+		savedAngularTimePoints = angularTimePoints;
+		
 		repaint();
+	}
+	
+	public void saveProfile() {
+		try {
+			PrintWriter writer = new PrintWriter(fileName, "UTF-8");
+			writer.println(savedTimePoints.length);
+			for(int i = 0;i < savedTimePoints.length;i++) {
+				writer.format("%.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
+						savedTimePoints[i][0], savedTimePoints[i][1], savedTimePoints[i][2],
+						savedAngularTimePoints[i][0], savedAngularTimePoints[i][1], savedAngularTimePoints[i][2]);
+			}
+			writer.close();
+		}
+		catch (IOException ex) {
+			ex.printStackTrace();
+		}
 	}
 	
 	// Basic linear interpolation function
