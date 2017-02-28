@@ -1,6 +1,7 @@
 package lib.frc1747.motion_profile.gui._1d;
 
 import java.awt.GridLayout;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -10,7 +11,6 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	private SingleGraphPanel translationalPanel;
 	private SingleGraphPanel rotationalPanel;
 	
-	private String fileName = "C:\\Users\\Tiger\\Documents\\MotionProfiling\\gear_profile.csv";
 	private double[][] savedTimePoints;
 	private double[][] savedAngularTimePoints;
 
@@ -33,7 +33,7 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		double vmax = 12;
 		double jmax = 50;
 		double r_width = 3;
-		double dt = 0.05;
+		double dt = 0.01;
 
 		// ----------------------------------------
 		// Convert the segment data into point data
@@ -242,19 +242,21 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		repaint();
 	}
 	
-	public void saveProfile() {
-		try {
-			PrintWriter writer = new PrintWriter(fileName, "UTF-8");
-			writer.println(savedTimePoints.length);
-			for(int i = 0;i < savedTimePoints.length;i++) {
-				writer.format("%.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
-						savedTimePoints[i][0], savedTimePoints[i][1], savedTimePoints[i][2],
-						savedAngularTimePoints[i][0], savedAngularTimePoints[i][1], savedAngularTimePoints[i][2]);
+	public void saveProfile(File file) {
+		if(savedTimePoints != null) {
+			try {
+				PrintWriter writer = new PrintWriter(file);
+				writer.println(savedTimePoints.length);
+				for(int i = 0;i < savedTimePoints.length;i++) {
+					writer.format("%.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
+							savedTimePoints[i][0], savedTimePoints[i][1], savedTimePoints[i][2],
+							savedAngularTimePoints[i][0], savedAngularTimePoints[i][1], savedAngularTimePoints[i][2]);
+				}
+				writer.close();
 			}
-			writer.close();
-		}
-		catch (IOException ex) {
-			ex.printStackTrace();
+			catch (IOException ex) {
+				ex.printStackTrace();
+			}
 		}
 	}
 	

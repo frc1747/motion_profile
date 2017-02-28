@@ -2,7 +2,9 @@ package lib.frc1747.motion_profile.gui._1d;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -12,10 +14,13 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 	OfflineProfileGeneratorPanel panel;
 	JMenuBar bar;
 	JMenuItem saveProfile;
+	JFileChooser chooser;
 	
 	public OfflineProfileGeneratorFrame() {
 		bar = new JMenuBar();
 		setJMenuBar(bar);
+		
+		chooser = new JFileChooser();
 
 		saveProfile = new JMenuItem("Save Profile");
 		saveProfile.addActionListener(this);
@@ -36,7 +41,11 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == saveProfile) {
-			panel.saveProfile();
+			int retVal = chooser.showSaveDialog(this);
+			if(retVal == JFileChooser.APPROVE_OPTION) {
+				File file = chooser.getSelectedFile();
+				panel.saveProfile(file);
+			}
 		}
 	}
 }
