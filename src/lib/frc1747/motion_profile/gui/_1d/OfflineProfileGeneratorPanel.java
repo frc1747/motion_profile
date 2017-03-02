@@ -14,6 +14,9 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	private double[][] savedTimePoints;
 	private double[][] savedAngularTimePoints;
 
+	private double translationScale;
+	private double rotationScale;
+	
 	public OfflineProfileGeneratorPanel() {
 		setLayout(new GridLayout(2, 1));
 		
@@ -23,15 +26,18 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		rotationalPanel = new SingleGraphPanel("Rotation");
 		rotationalPanel.setUnits("rad", "s");
 		add(rotationalPanel);
+		
+		translationScale = 1;
+		rotationScale = 1;
 	}
 	
 	/**
 	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	 */
 	public void setProfileSetpoints(double[][] profileSegments) {
-		double amax = 20;
-		double vmax = 12;
-		double jmax = 50;
+		double amax = 12;
+		double vmax = 6;
+		double jmax = 24;
 		double r_width = 3;
 		double dt = 0.01;
 
@@ -244,13 +250,18 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	
 	public void saveProfile(File file) {
 		if(savedTimePoints != null) {
+			double r = 1;
 			try {
 				PrintWriter writer = new PrintWriter(file);
 				writer.println(savedTimePoints.length);
 				for(int i = 0;i < savedTimePoints.length;i++) {
 					writer.format("%.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
-							savedTimePoints[i][0], savedTimePoints[i][1], savedTimePoints[i][2],
-							savedAngularTimePoints[i][0], savedAngularTimePoints[i][1], savedAngularTimePoints[i][2]);
+							translationScale * savedTimePoints[i][0],
+							translationScale * savedTimePoints[i][1],
+							translationScale * savedTimePoints[i][2],
+							rotationScale * savedAngularTimePoints[i][0],
+							rotationScale * savedAngularTimePoints[i][1],
+							rotationScale * savedAngularTimePoints[i][2]);
 				}
 				writer.close();
 			}
@@ -266,5 +277,12 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			double in_min, double in_max,
 			double out_min, double out_max) {
 		return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	}
+
+	public void setTranslationScale(double scale) {
+		translationScale = scale;
+	}
+	public void setRotationScale(double scale) {
+		rotationScale = scale;
 	}
 }

@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -14,6 +15,8 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 	OfflineProfileGeneratorPanel panel;
 	JMenuBar bar;
 	JMenuItem saveProfile;
+	JCheckBoxMenuItem reverseTranslation;
+	JCheckBoxMenuItem reverseRotation;
 	JFileChooser chooser;
 	
 	public OfflineProfileGeneratorFrame() {
@@ -25,6 +28,12 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 		saveProfile = new JMenuItem("Save Profile");
 		saveProfile.addActionListener(this);
 		bar.add(saveProfile);
+		reverseTranslation = new JCheckBoxMenuItem("Reverse Translation");
+		reverseTranslation.addActionListener(this);
+		bar.add(reverseTranslation);
+		reverseRotation = new JCheckBoxMenuItem("Reverse Rotation");
+		reverseRotation.addActionListener(this);
+		bar.add(reverseRotation);
 		
 		panel = new OfflineProfileGeneratorPanel();
 		add(panel);
@@ -46,6 +55,12 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 				File file = chooser.getSelectedFile();
 				panel.saveProfile(file);
 			}
+		}
+		else if(e.getSource() == reverseTranslation) {
+			panel.setTranslationScale(reverseTranslation.isSelected() ? -1 : 1);
+		}
+		else if(e.getSource() == reverseRotation) {
+			panel.setRotationScale(reverseRotation.isSelected() ? -1 : 1);
 		}
 	}
 }
