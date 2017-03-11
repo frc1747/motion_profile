@@ -15,6 +15,11 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import javax.swing.JPanel;
@@ -393,5 +398,49 @@ public class OfflineSplineGeneratorPanel
 
 	public void setProfilePanel(OfflineProfileGeneratorPanel profilePanel) {
 		this.profilePanel = profilePanel;
+	}
+
+	public void saveWaypoints(File file) {
+		try {
+			PrintWriter writer = new PrintWriter(file);
+			for(int i = 0;i < waypoints.size();i++) {
+				Waypoint waypoint = waypoints.get(i);
+				writer.format("%.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n",
+						waypoint.x,
+						waypoint.y,
+						waypoint.v_t,
+						waypoint.v_m,
+						waypoint.a_t,
+						waypoint.a_m);
+			}
+			writer.close();
+		}
+		catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+	public void openWaypoints(File file) {
+		waypoints.clear();
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			String line = null;
+			while((line = reader.readLine()) != null) {
+				if(!line.isEmpty()) {
+					String[] parts = line.split(",");
+					Waypoint waypoint = new Waypoint();
+					waypoint.x = Double.parseDouble(parts[0].trim());
+					waypoint.y = Double.parseDouble(parts[1].trim());
+					waypoint.v_t = Double.parseDouble(parts[2].trim());
+					waypoint.v_m = Double.parseDouble(parts[3].trim());
+					waypoint.a_t = Double.parseDouble(parts[4].trim());
+					waypoint.a_m = Double.parseDouble(parts[5].trim());
+					waypoints.add(waypoint);
+				}
+			}
+			repaint();
+		}
+		catch (IOException ex) {
+			ex.printStackTrace();
+		}
 	}
 }

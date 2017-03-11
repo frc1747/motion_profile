@@ -6,10 +6,14 @@ package lib.frc1747.motion_profile.gui._2d;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 
 import lib.frc1747.motion_profile.gui._1d.OfflineProfileGeneratorFrame;
@@ -20,10 +24,30 @@ public class OfflineSplineGeneratorFrame extends JFrame implements ActionListene
 	JRadioButtonMenuItem addPoint;
 	JRadioButtonMenuItem editPoint;
 	JRadioButtonMenuItem deletePoint;
+	JMenuItem saveWaypoints;
+	JMenuItem openWaypoints;
 	ButtonGroup modeGroup;
+	JFileChooser chooser;
 	public OfflineSplineGeneratorFrame() {
+		chooser = new JFileChooser();
+		chooser.setCurrentDirectory(new File  
+				(System.getProperty("user.home") + 
+						System.getProperty("file.separator") +
+						"Documents" +
+						System.getProperty("file.separator") +
+						"MotionProfiling" +
+						System.getProperty("file.separator") +
+						"waypoints"));
+		
 		bar = new JMenuBar();
 		setJMenuBar(bar);
+		
+		saveWaypoints = new JMenuItem("Save Waypoints");
+		saveWaypoints.addActionListener(this);
+		bar.add(saveWaypoints);
+		openWaypoints = new JMenuItem("Open Waypoints");
+		openWaypoints.addActionListener(this);
+		bar.add(openWaypoints);
 		
 		modeGroup = new ButtonGroup();
 		addPoint = new JRadioButtonMenuItem("Add point");
@@ -50,14 +74,27 @@ public class OfflineSplineGeneratorFrame extends JFrame implements ActionListene
 	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		if(e.getSource() == addPoint) {
+		if(e.getSource() == saveWaypoints) {
+			int retVal = chooser.showSaveDialog(this);
+			if(retVal == JFileChooser.APPROVE_OPTION) {
+				File file = chooser.getSelectedFile();
+				panel.saveWaypoints(file);
+			}
+		}
+		else if(e.getSource() == openWaypoints) {
+			int retVal = chooser.showSaveDialog(this);
+			if(retVal == JFileChooser.APPROVE_OPTION) {
+				File file = chooser.getSelectedFile();
+				panel.openWaypoints(file);
+			}
+		}
+		else if(e.getSource() == addPoint) {
 			panel.setEditMode(EditMode.ADDPOINT);
 		}
-		if(e.getSource() == editPoint) {
+		else if(e.getSource() == editPoint) {
 			panel.setEditMode(EditMode.EDITPOINT);
 		}
-		if(e.getSource() == deletePoint) {
+		else if(e.getSource() == deletePoint) {
 			panel.setEditMode(EditMode.DELETEPOINT);
 		}
 	}
