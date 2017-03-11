@@ -4,6 +4,8 @@
 
 package lib.frc1747.motion_profile.generator._2d;
 
+import lib.frc1747.motion_profile.Util;
+
 // Partially based off of the article:
 // Planning Motion Trajectories for Mobile Robots Using Splines by Christoph Sprunk
 public class QuinticBezier {
@@ -157,7 +159,7 @@ public class QuinticBezier {
 			}
 			// Interpolate
 			else {
-				t = linearInterpolate(
+				t = Util.linearInterpolate(
 						s,
 						lengthTable[j][1], lengthTable[j+1][1],
 						lengthTable[j][0], lengthTable[j+1][0]);
@@ -274,13 +276,4 @@ public class QuinticBezier {
 		double d = Math.sqrt(dx * dx + dy * dy);
 		return (dx * ddy - dy * ddx) / (d * d * d);
 	}
-
-	// Basic linear interpolation function
-	public double linearInterpolate(
-			double input,
-			double in_min, double in_max,
-			double out_min, double out_max) {
-		return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-	}
-	
 }

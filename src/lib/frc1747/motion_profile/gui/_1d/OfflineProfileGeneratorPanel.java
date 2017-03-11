@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 
 import javax.swing.JPanel;
 
+import lib.frc1747.motion_profile.Parameters;
 import lib.frc1747.motion_profile.generator._1d.ProfileGenerator;
 
 public class OfflineProfileGeneratorPanel extends JPanel {
@@ -37,12 +38,6 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	 */
 	public void setProfileSetpoints(double[][] profileSegments) {
-		double amax = 20;
-		double vmax = 6;
-		double jmax = 40;
-		double r_width = 2.1;
-		double dt = 0.01;
-
 		// ----------------------------------------
 		// Convert the segment data into point data
 		// ----------------------------------------
@@ -80,8 +75,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			if(i < length-1) ddtheta += profileSegments[i][1];
 			ddtheta = Math.abs(ddtheta);
 
-			profilePoints[i][1] = vmax/(1 + r_width/2 * (dtheta/ds + ddtheta/ds/ds));
-			profilePoints[i][2] = amax/(1 + r_width/2 * (dtheta/ds + ddtheta/ds/ds));
+			profilePoints[i][1] = Parameters.V_MAX/(1 + Parameters.R_WIDTH/2 * (dtheta/ds + ddtheta/ds/ds));
+			profilePoints[i][2] = Parameters.A_MAX/(1 + Parameters.R_WIDTH/2 * (dtheta/ds + ddtheta/ds/ds));
 		}
 
 		// Force the max everything at the endpoints of the profile to zero
@@ -90,9 +85,14 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		profilePoints[profilePoints.length-1][1] = 0;
 		profilePoints[profilePoints.length-1][2] = 0;
 		
+		ProfileGenerator.limitVelocities(profilePoints);
 		double[] profileTimes = ProfileGenerator.timesFromPoints(profilePoints);
-		double[][] timePoints = ProfileGenerator.profileFromPoints(profilePoints, profileTimes);
-		double[][] angularTimePoints = ProfileGenerator.synchronizedProfileFromProfile(timePoints, profilePoints, angularProfilePoints, profileTimes);
+		double[][] timePoints = ProfileGenerator.profileFromPoints(profilePoints, profileTimes, Parameters.DT);
+		double[][] angularTimePoints = ProfileGenerator.synchronizedProfileFromProfile(timePoints,
+				profilePoints,
+				angularProfilePoints,
+				profileTimes,
+				Parameters.DT);
 		
 		// Calculate the maximum distance and rotation so it can be displayed
 		double xmax = 0;
@@ -107,13 +107,21 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		}
 		
 		// Limit the maximum jerk
-		double jerkFilterTime = amax/jmax;
-		timePoints = BoxcarFilter.multiFilter(timePoints, (int)Math.ceil(jerkFilterTime/dt));
-		angularTimePoints = BoxcarFilter.multiFilter(angularTimePoints, (int)Math.ceil(jerkFilterTime/dt));
+		double jerkFilterTime = Parameters.A_MAX/Parameters.J_MAX;
+		timePoints = BoxcarFilter.multiFilter(timePoints, (int)Math.ceil(jerkFilterTime/Parameters.DT));
+		angularTimePoints = BoxcarFilter.multiFilter(angularTimePoints, (int)Math.ceil(jerkFilterTime/Parameters.DT));
 		
 		// Display the two profiles
-		translationalPanel.setProfile(timePoints, dt, amax, vmax, xmax, timePoints.length * dt);
-		rotationalPanel.setProfile(angularTimePoints, dt, amax/r_width*2, vmax/r_width*2, axmax, timePoints.length * dt);
+		translationalPanel.setProfile(timePoints, Parameters.DT,
+				Parameters.A_MAX,
+				Parameters.V_MAX,
+				xmax,
+				timePoints.length * Parameters.DT);
+		rotationalPanel.setProfile(angularTimePoints, Parameters.DT,
+				Parameters.A_MAX/Parameters.R_WIDTH*2,
+				Parameters.V_MAX/Parameters.R_WIDTH*2,
+				axmax,
+				timePoints.length * Parameters.DT);
 		
 		// Save the points so outputting can be done on them later
 		// Flipping position and acceleration for compatibility
@@ -152,14 +160,6 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 				ex.printStackTrace();
 			}
 		}
-	}
-	
-	// Basic linear interpolation function
-	public double linearInterpolate(
-			double input,
-			double in_min, double in_max,
-			double out_min, double out_max) {
-		return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 	}
 
 	public void setTranslationScale(double scale) {

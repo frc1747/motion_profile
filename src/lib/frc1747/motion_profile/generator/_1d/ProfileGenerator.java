@@ -1,14 +1,22 @@
 package lib.frc1747.motion_profile.generator._1d;
 
-public class ProfileGenerator {
+import lib.frc1747.motion_profile.Util;
 
-	// Also adjusts the max velocities an accelerations of profilePoints
-	// The input format is [x0, v0, a0; x1, v1, a1; ...]
-	public static double[] timesFromPoints(double[][] profilePoints) {
-		double[] profileTimes = new double[profilePoints.length];
+/**
+ * Contains several utility methods to time parameterize profiles 
+ * @author Tiger
+ *
+ */
+public class ProfileGenerator {
+	
+	/**
+	 * Adjusts the velocities so that the acceleration limits are not violated
+	 * @param profilePoints - the profile to adjust velocities<br>
+	 * The format is [x0, v0, a0; x1, v1, a1; ...]
+	 */
+	public static void limitVelocities(double[][] profilePoints) {
 		double[] profileVisiteds = new double[profilePoints.length];
 		for(int i = 0;i < profilePoints.length;i++) {
-			profileTimes[i] = 0;
 			profileVisiteds[i] = 0;
 		}
 		
@@ -61,10 +69,19 @@ public class ProfileGenerator {
 			// Mark this point as visited
 			profileVisiteds[index] = 1;
 		}
-		
-		// ----------------------------------------
-		// Time parameterize the profile
-		// ----------------------------------------
+	}
+	
+	/**
+	 * Determines the time for each profile waypoint.
+	 * @param profilePoints - the profile waypoints<br>
+	 * The format is [x0, v0, a0; x1, v1, a1; ...]
+	 * @return the time at each profile waypoint as an array
+	 */
+	public static double[] timesFromPoints(double[][] profilePoints) {
+		double[] profileTimes = new double[profilePoints.length];
+		for(int i = 0;i < profilePoints.length;i++) {
+			profileTimes[i] = 0;
+		}
 		
 		// Add times to the profile
 		for(int i = 1;i < profilePoints.length;i++) {
@@ -79,11 +96,18 @@ public class ProfileGenerator {
 		return profileTimes;
 	}
 
-	// The input format is [x0, v0, a0; x1, v1, a1; ...]
-	public static double[][] profileFromPoints(double[][] profilePoints, double[] profileTimes) {
-		// The format is [x0, v0, a0; x1, v1, a1; ...]
-		double dt = 0.01;
+	/**
+	 * Creates a time parameterized profile from 1D profile waypoints.
+	 * @param profilePoints - the profile waypoints<br>
+	 * The format is [x0, v0, a0; x1, v1, a1; ...]
+	 * @param profileTimes - the time at each waypoint
+	 * @param dt - the timestep of the time parameterized profile
+	 * @return a time parameterized profile<br>
+	 * The format is [x0, v0, a0; x1, v1, a1; ...]
+	 */
+	public static double[][] profileFromPoints(double[][] profilePoints, double[] profileTimes, double dt) {
 		double profileTime = profileTimes[profilePoints.length-1];
+		// The format is [x0, v0, a0; x1, v1, a1; ...]
 		double[][] timePoints = new double[(int)Math.ceil(profileTime / dt)][3];
 		
 		// Populate the time parameterized profile
@@ -104,7 +128,7 @@ public class ProfileGenerator {
 			}
 			// Interpolate
 			else {
-				timePoints[i][1] = linearInterpolate(
+				timePoints[i][1] = Util.linearInterpolate(
 						t,
 						profileTimes[k], profileTimes[k+1],
 						profilePoints[k][1], profilePoints[k+1][1]);
@@ -124,9 +148,18 @@ public class ProfileGenerator {
 		return timePoints;
 	}
 	
+	/**
+	 * Creates a profile that is synchronized with an existing profile
+	 * @param timePoints - the time parameterized profile
+	 * @param profilePoints - the profile waypoints
+	 * @param profilePoints2 - the profile waypoints to synchronize with the other profile waypoints
+	 * @param profileTimes - the times of the profile waypoints
+	 * @param dt - the timestep the time parameterized profile is
+	 * @return the time parameterized second profile
+	 */
 	public static double[][] synchronizedProfileFromProfile(double[][] timePoints,
-			double[][] profilePoints, double[] angularProfilePoints, double[] profileTimes) {
-		double dt = 0.01;
+			double[][] profilePoints, double[] profilePoints2, double[] profileTimes,
+			double dt) {
 		// Take the profile points and convert to angular positions
 		double[][] angularTimePoints = new double[timePoints.length][3];
 		for(int i = 0, k = 0;i < timePoints.length;i++) {
@@ -142,14 +175,14 @@ public class ProfileGenerator {
 			
 			// The arc length exactly corresponds with a table value
 			if(t == profileTimes[k]) {
-				angularTimePoints[i][0] = angularProfilePoints[k];
+				angularTimePoints[i][0] = profilePoints2[k];
 			}
 			// Interpolate
 			else {
-				angularTimePoints[i][0] = linearInterpolate(
+				angularTimePoints[i][0] = Util.linearInterpolate(
 						s,
 						profilePoints[k][0], profilePoints[k+1][0],
-						angularProfilePoints[k], angularProfilePoints[k+1]);
+						profilePoints2[k], profilePoints2[k+1]);
 			}
 		}
 
@@ -164,13 +197,5 @@ public class ProfileGenerator {
 		}
 		
 		return angularTimePoints;
-	}
-	
-	// Basic linear interpolation function
-	public static double linearInterpolate(
-			double input,
-			double in_min, double in_max,
-			double out_min, double out_max) {
-		return (input - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 	}
 }

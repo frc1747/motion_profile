@@ -1,5 +1,7 @@
 package lib.frc1747.motion_profile.generator._2d;
 
+import lib.frc1747.motion_profile.Parameters;
+
 /**
  * Contains several utility methods for converting waypoints (2d) into profiles.
  * @author Tiger
@@ -36,7 +38,7 @@ public class SplineGenerator {
 		double[][][] profileAccumulator = new double[splines.length][][];
 		int profileLength = 0;
 		for(int i = 0;i < splines.length;i++) {
-			profileAccumulator[i] = splines[i].uniformLengthSegmentData(100, .005);
+			profileAccumulator[i] = splines[i].uniformLengthSegmentData(Parameters.I_SAMPLE_COUNT, Parameters.I_SAMPLE_LENGTH);
 			profileLength += profileAccumulator[i].length;
 		}
 		//ds, vmax
