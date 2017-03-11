@@ -75,8 +75,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			if(i < length-1) ddtheta += profileSegments[i][1];
 			ddtheta = Math.abs(ddtheta);
 
-			profilePoints[i][1] = Parameters.V_MAX/(1 + Parameters.R_WIDTH/2 * (dtheta/ds + ddtheta/ds/ds));
-			profilePoints[i][2] = Parameters.A_MAX/(1 + Parameters.R_WIDTH/2 * (dtheta/ds + ddtheta/ds/ds));
+			profilePoints[i][1] = Parameters.V_MAX/(1 + Parameters.W_WIDTH/2 * (dtheta/ds + ddtheta/ds/ds));
+			profilePoints[i][2] = Parameters.A_MAX/(1 + Parameters.W_WIDTH/2 * (dtheta/ds + ddtheta/ds/ds));
 		}
 
 		// Force the max everything at the endpoints of the profile to zero
@@ -118,8 +118,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 				xmax,
 				timePoints.length * Parameters.DT);
 		rotationalPanel.setProfile(angularTimePoints, Parameters.DT,
-				Parameters.A_MAX/Parameters.R_WIDTH*2,
-				Parameters.V_MAX/Parameters.R_WIDTH*2,
+				Parameters.A_MAX/Parameters.W_WIDTH*2,
+				Parameters.V_MAX/Parameters.W_WIDTH*2,
 				axmax,
 				timePoints.length * Parameters.DT);
 		
