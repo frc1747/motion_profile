@@ -29,7 +29,7 @@ public class SingleGraphPanel extends JPanel {
 		this.tUnit = tUnit;
 	}
 	
-	// The format is [a0, v0, s0; a1, v1, s1; ...]
+	// The format is [x0, v0, a0; x1, v1, a1; ...]
 	public void setProfile(double[][] profile, double dt, 
 			double amax, double vmax, double xmax, double tmax) {
 		this.profile = profile;
@@ -114,9 +114,9 @@ public class SingleGraphPanel extends JPanel {
 			for(int i = 1;i < profile.length;i++) {
 				g.drawLine(
 						(int)(graphOffset + graphWidth * (i-1) * dt / tmax),
-						(int)(fontSize + graphHeight/2 - profile[i-1][0] * graphHeight/2 / amax),
+						(int)(fontSize + graphHeight/2 - profile[i-1][2] * graphHeight/2 / amax),
 						(int)(graphOffset + graphWidth * i * dt / tmax),
-						(int)(fontSize + graphHeight/2 - profile[i][0] * graphHeight/2 / amax));
+						(int)(fontSize + graphHeight/2 - profile[i][2] * graphHeight/2 / amax));
 			}
 			g.setColor(Color.RED);
 			for(int i = 1;i < profile.length;i++) {
@@ -130,9 +130,9 @@ public class SingleGraphPanel extends JPanel {
 			for(int i = 1;i < profile.length;i++) {
 				g.drawLine(
 						(int)(graphOffset + graphWidth * (i-1) * dt / tmax),
-						(int)(fontSize + graphHeight/2 - profile[i-1][2] * graphHeight/2 / xmax),
+						(int)(fontSize + graphHeight/2 - profile[i-1][0] * graphHeight/2 / xmax),
 						(int)(graphOffset + graphWidth * i * dt / tmax),
-						(int)(fontSize + graphHeight/2 - profile[i][2] * graphHeight/2 / xmax));
+						(int)(fontSize + graphHeight/2 - profile[i][0] * graphHeight/2 / xmax));
 			}
 		}
 	}

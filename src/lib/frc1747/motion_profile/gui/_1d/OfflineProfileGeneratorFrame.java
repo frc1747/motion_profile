@@ -20,10 +20,18 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 	JFileChooser chooser;
 	
 	public OfflineProfileGeneratorFrame() {
+		chooser = new JFileChooser();
+		chooser.setCurrentDirectory(new File  
+				(System.getProperty("user.home") + 
+						System.getProperty("file.separator") +
+						"Documents" +
+						System.getProperty("file.separator") +
+						"MotionProfiling" +
+						System.getProperty("file.separator") +
+						"profiles"));
+		
 		bar = new JMenuBar();
 		setJMenuBar(bar);
-		
-		chooser = new JFileChooser();
 
 		saveProfile = new JMenuItem("Save Profile");
 		saveProfile.addActionListener(this);
