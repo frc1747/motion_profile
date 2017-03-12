@@ -55,29 +55,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			angularProfilePoints[i] = angularProfilePoints[i-1] + profileSegments[i-1][1];
 		}
 		
-		// Fill out the max velocities and accelerations
-		for(int i = 0;i < length;i++) {
-			// Calculate ds
-			double ds = 0;
-			if(i > 0) ds += profileSegments[i-1][0];
-			if(i < length-1) ds += profileSegments[i][0];
-			ds = Math.abs(ds) / 2;
-			
-			// Calculate dtheta
-			double dtheta = 0;
-			if(i > 0) dtheta += profileSegments[i-1][1];
-			if(i < length-1) dtheta += profileSegments[i][1];
-			dtheta = Math.abs(dtheta) / 2;
-			
-			// Calculate ddtheta
-			double ddtheta = 0;
-			if(i > 0) ddtheta -= profileSegments[i-1][1];
-			if(i < length-1) ddtheta += profileSegments[i][1];
-			ddtheta = Math.abs(ddtheta);
-
-			profilePoints[i][1] = Parameters.V_MAX/(1 + Parameters.W_WIDTH/2 * (dtheta/ds + ddtheta/ds/ds));
-			profilePoints[i][2] = Parameters.A_MAX/(1 + Parameters.W_WIDTH/2 * (dtheta/ds + ddtheta/ds/ds));
-		}
+		ProfileGenerator.skidSteerLimitVelocities(profilePoints, profileSegments,
+				Parameters.V_MAX, Parameters.A_MAX, Parameters.W_WIDTH);
 
 		// Force the max everything at the endpoints of the profile to zero
 		profilePoints[0][1] = 0;

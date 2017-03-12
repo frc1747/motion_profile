@@ -8,6 +8,45 @@ import lib.frc1747.motion_profile.Util;
  *
  */
 public class ProfileGenerator {
+	/**
+	 * Calculates the maximum acceleration and velocities for each profile point
+	 * given the profile differences, max linear accelerations and velocities,
+	 * and robot wheel width. Fills in the profilePoints array that is passed in.
+	 * @param profilePoints - the translation distance at each time instant<br>
+	 * The format is [x0, v0, a0; x1, v1, a1; ...]
+	 * @param profileSegments - the differences in translation and rotation between each time instant<br>
+	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
+	 * @param vmax - the max velocity in a straight line
+	 * @param amax - the max acceleration in a straight line
+	 * @param wwidth - the track width of the robot
+	 */
+	public static void skidSteerLimitVelocities(double[][] profilePoints, double[][] profileSegments,
+			double vmax, double amax, double wwidth) {
+		// Fill out the max velocities and accelerations
+		int length = profileSegments.length;
+		for(int i = 0;i < length;i++) {
+			// Calculate ds
+			double ds = 0;
+			if(i > 0) ds += profileSegments[i-1][0];
+			if(i < length-1) ds += profileSegments[i][0];
+			ds = Math.abs(ds) / 2;
+			
+			// Calculate dtheta
+			double dtheta = 0;
+			if(i > 0) dtheta += profileSegments[i-1][1];
+			if(i < length-1) dtheta += profileSegments[i][1];
+			dtheta = Math.abs(dtheta) / 2;
+			
+			// Calculate ddtheta
+			double ddtheta = 0;
+			if(i > 0) ddtheta -= profileSegments[i-1][1];
+			if(i < length-1) ddtheta += profileSegments[i][1];
+			ddtheta = Math.abs(ddtheta);
+
+			profilePoints[i][1] = vmax/(1 + wwidth/2 * (dtheta/ds + ddtheta/ds/ds));
+			profilePoints[i][2] = amax/(1 + wwidth/2 * (dtheta/ds + ddtheta/ds/ds));
+		}
+	}
 	
 	/**
 	 * Adjusts the velocities so that the acceleration limits are not violated
