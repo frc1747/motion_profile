@@ -81,7 +81,7 @@ public class ProfileGenerator {
 	 */
 	public static void skidSteerLimitVelocities(double[][] profilePoints, double[][] profileSegments,
 			double vmax, double amax, double wwidth) {
-		// Fill out the max velocities and accelerations
+		// Fill out the max velocities and accelerations for each segment
 		int length = profileSegments.length;
 		for(int i = 0;i < length;i++) {
 			// Calculate ds
@@ -101,10 +101,19 @@ public class ProfileGenerator {
 			if(i > 0) ddtheta -= profileSegments[i-1][1];
 			if(i < length-1) ddtheta += profileSegments[i][1];
 			ddtheta = Math.abs(ddtheta);
-
+			
 			profilePoints[i][1] = vmax/(1 + wwidth/2 * (dtheta/ds + ddtheta/ds/ds));
 			profilePoints[i][2] = amax/(1 + wwidth/2 * (dtheta/ds + ddtheta/ds/ds));
 		}
+		// Adjust the max velocities and accelerations so they fall on the points
+		profilePoints[profilePoints.length-1][1] = profilePoints[profilePoints.length-2][1]/2;
+		profilePoints[profilePoints.length-1][2] = profilePoints[profilePoints.length-2][2]/2;
+		for(int i = profilePoints.length-2;i >= 1;i--) {
+			profilePoints[i][1] = (profilePoints[i][1] + profilePoints[i-1][1])/2;
+			profilePoints[i][2] = (profilePoints[i][2] + profilePoints[i-1][2])/2;
+		}
+		profilePoints[0][1] /= 2;
+		profilePoints[0][2] /= 2;
 	}
 	
 	/**

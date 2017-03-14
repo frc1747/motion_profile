@@ -79,6 +79,6 @@ public class SplineGenerator {
 			profileSegments[i][1] = a/count;
 		}
 		
-		return null;
+		return profileSegments;
 	}
 }
