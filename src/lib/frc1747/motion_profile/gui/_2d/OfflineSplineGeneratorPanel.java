@@ -24,6 +24,7 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
+import lib.frc1747.motion_profile.Parameters;
 import lib.frc1747.motion_profile.generator._2d.QuinticBezier;
 import lib.frc1747.motion_profile.generator._2d.SplineGenerator;
 import lib.frc1747.motion_profile.generator._2d.Waypoint;
@@ -89,7 +90,8 @@ public class OfflineSplineGeneratorPanel
 			splines = SplineGenerator.splinesFromWaypoints(
 					waypoints.toArray(new Waypoint[0]));
 			
-			double[][] profileSetpoints = SplineGenerator.flattenProfile(splines);
+			double[][] profileSetpoints = SplineGenerator.flattenProfile(splines,
+					Parameters.I_SAMPLE_COUNT, Parameters.I_SAMPLE_LENGTH);
 			if(profilePanel != null) {
 				profilePanel.setProfileSetpoints(profileSetpoints);
 			}
