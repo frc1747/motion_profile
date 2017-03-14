@@ -8,6 +8,65 @@ import lib.frc1747.motion_profile.Util;
  *
  */
 public class ProfileGenerator {
+
+	/**
+	 * Integrates the differences of the profile segments to get the location at each
+	 * time instant. Puts it in the correct format for later methods if this is the primary motion profile.
+	 * @param profileSegments - a list of distance differences<br>
+	 * The format is [x0, y0, ...; x1, y1, ...; ...]
+	 * @param index - which column contains the profile data
+	 * @return a list of locations at each time<br>
+	 * The format is [x0, 0, 0; x1, 0, 0; ...]
+	 */
+	public static double[][] primaryProfileIntegrate(double[][] profileSegments, int index) {
+		double[][] profilePoints = new double[profileSegments.length+1][3];
+		
+		profilePoints[0][0] = 0;
+		for(int i = 1;i < profilePoints.length;i++) {
+			profilePoints[i][0] = profilePoints[i-1][0] + profileSegments[i-1][index];
+		}
+		
+		return profilePoints;
+	}
+	
+	/**
+	 * Integrates the differences of the profile segments to get the location at each
+	 * time instant. Puts it in the correct format for later methods if this is the primary motion profile.
+	 * @param profileSegments - a list of distance differences
+	 * @return a list of locations at each time<br>
+	 * The format is [x0, 0, 0; x1, 0, 0; ...]
+	 */
+	public static double[][] primaryProfileIntegrate(double[] profileSegments) {
+		double[][] profilePoints = new double[profileSegments.length+1][3];
+		
+		profilePoints[0][0] = 0;
+		for(int i = 1;i < profilePoints.length;i++) {
+			profilePoints[i][0] = profilePoints[i-1][0] + profileSegments[i-1];
+		}
+		
+		return profilePoints;
+	}
+
+	/**
+	 * Integrates the differences of the profile segments to get the location at each
+	 * time instant. Puts it in the correct format for later methods if this is a profile
+	 * that needs to be synchronized with another profile.
+	 * @param profileSegments - a list of distance differences<br>
+	 * The format is [x0, y0, ...; x1, y1, ...; ...]
+	 * @param index - which column contains the profile data
+	 * @return a list of locations at each time<br>
+	 */
+	public static double[] secondaryProfileIntegrate(double[][] profileSegments, int index) {
+		double[] profilePoints = new double[profileSegments.length+1];
+		
+		profilePoints[0] = 0;
+		for(int i = 1;i < profilePoints.length;i++) {
+			profilePoints[i] = profilePoints[i-1] + profileSegments[i-1][index];
+		}
+		
+		return profilePoints;
+	}
+	
 	/**
 	 * Calculates the maximum acceleration and velocities for each profile point
 	 * given the profile differences, max linear accelerations and velocities,

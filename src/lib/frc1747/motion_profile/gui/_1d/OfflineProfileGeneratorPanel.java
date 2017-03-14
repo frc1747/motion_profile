@@ -38,22 +38,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	 */
 	public void setProfileSetpoints(double[][] profileSegments) {
-		// ----------------------------------------
-		// Convert the segment data into point data
-		// ----------------------------------------
-		
-		// The format is [s0, v0, a0; s1, v1, a1; ...]
-		int length = profileSegments.length+1;
-		double[][] profilePoints = new double[length][3];
-		double[] angularProfilePoints = new double[length];
-		
-		// Fill out the arc length and angles
-		profilePoints[0][0] = 0;
-		angularProfilePoints[0] = 0;
-		for(int i = 1;i < length;i++) {
-			profilePoints[i][0] = profilePoints[i-1][0] + profileSegments[i-1][0];
-			angularProfilePoints[i] = angularProfilePoints[i-1] + profileSegments[i-1][1];
-		}
+		double[][] profilePoints = ProfileGenerator.primaryProfileIntegrate(profileSegments, 0);
+		double[] angularProfilePoints = ProfileGenerator.secondaryProfileIntegrate(profileSegments, 1);
 		
 		ProfileGenerator.skidSteerLimitVelocities(profilePoints, profileSegments,
 				Parameters.V_MAX, Parameters.A_MAX, Parameters.W_WIDTH);
