@@ -36,11 +36,14 @@ public class PseudoProfileTest {
 		timePoints = BoxcarFilter.multiFilter(timePoints, (int)Math.ceil(jerkFilterTime/Parameters.DT));
 		angularTimePoints = BoxcarFilter.multiFilter(angularTimePoints, (int)Math.ceil(jerkFilterTime/Parameters.DT));
 		
-		System.out.println(timePoints.length);
-		for(int i = 0;i < timePoints.length;i++) {
-			System.out.format("%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\n",
-					timePoints[i][0], timePoints[i][1], timePoints[i][2],
-					angularTimePoints[i][0], angularTimePoints[i][1], angularTimePoints[i][2]);
+		boolean output = true;
+		if(output) {
+			System.out.println(timePoints.length);
+			for(int i = 0;i < timePoints.length;i++) {
+				System.out.format("%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\n",
+						timePoints[i][0], timePoints[i][1], timePoints[i][2],
+						angularTimePoints[i][0], angularTimePoints[i][1], angularTimePoints[i][2]);
+			}
 		}
 	}
 }
