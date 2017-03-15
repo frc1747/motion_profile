@@ -69,7 +69,7 @@ public class SplineGenerator {
 			double s0, double a0, double s1, double a1, double sampleLength) {
 		// Parameters for generation
 		double s = s1 - s0;
-		int count = (int)Math.ceil(s / sampleLength);
+		int count = (int)Math.ceil(Math.abs(s) / sampleLength);
 		double a = a1 - a0;
 		
 		// Actual profile generation

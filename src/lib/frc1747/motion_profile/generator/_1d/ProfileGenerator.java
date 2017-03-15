@@ -88,6 +88,7 @@ public class ProfileGenerator {
 			double ds = 0;
 			if(i > 0) ds += profileSegments[i-1][0];
 			if(i < length-1) ds += profileSegments[i][0];
+			double signed_ds = ds;
 			ds = Math.abs(ds) / 2;
 			
 			// Calculate dtheta
@@ -102,9 +103,11 @@ public class ProfileGenerator {
 			if(i < length-1) ddtheta += profileSegments[i][1];
 			ddtheta = Math.abs(ddtheta);
 			
-			profilePoints[i][1] = vmax/(1 + wwidth/2 * (dtheta/ds + ddtheta/ds/ds));
+			profilePoints[i][1] = vmax/(1 + wwidth/2 * (dtheta/ds + ddtheta/ds/ds)) *
+					Math.signum(signed_ds);
 			profilePoints[i][2] = amax/(1 + wwidth/2 * (dtheta/ds + ddtheta/ds/ds));
 		}
+		
 		// Adjust the max velocities and accelerations so they fall on the points
 		profilePoints[profilePoints.length-1][1] = profilePoints[profilePoints.length-2][1]/2;
 		profilePoints[profilePoints.length-1][2] = profilePoints[profilePoints.length-2][2]/2;
