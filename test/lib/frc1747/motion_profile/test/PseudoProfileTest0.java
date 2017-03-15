@@ -5,7 +5,7 @@ import lib.frc1747.motion_profile.generator._1d.ProfileGenerator;
 import lib.frc1747.motion_profile.generator._2d.SplineGenerator;
 import lib.frc1747.motion_profile.gui._1d.BoxcarFilter;
 
-public class PseudoProfileTest {
+public class PseudoProfileTest0 {
 	public static void main(String[] args) {
 		double[][] profileSegments = SplineGenerator.flattenPseudoProfile(
 				0, 0, 4, Math.PI/4,
