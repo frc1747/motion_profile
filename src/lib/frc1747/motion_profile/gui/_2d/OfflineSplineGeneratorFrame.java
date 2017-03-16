@@ -82,7 +82,7 @@ public class OfflineSplineGeneratorFrame extends JFrame implements ActionListene
 			}
 		}
 		else if(e.getSource() == openWaypoints) {
-			int retVal = chooser.showSaveDialog(this);
+			int retVal = chooser.showOpenDialog(this);
 			if(retVal == JFileChooser.APPROVE_OPTION) {
 				File file = chooser.getSelectedFile();
 				panel.openWaypoints(file);
