@@ -17,6 +17,8 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 	JMenuItem saveProfile;
 	JCheckBoxMenuItem reverseTranslation;
 	JCheckBoxMenuItem reverseRotation;
+	JCheckBoxMenuItem zeroStart;
+	JCheckBoxMenuItem zeroEnd;
 	JFileChooser chooser;
 	
 	public OfflineProfileGeneratorFrame() {
@@ -42,6 +44,12 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 		reverseRotation = new JCheckBoxMenuItem("Reverse Rotation");
 		reverseRotation.addActionListener(this);
 		bar.add(reverseRotation);
+		zeroStart = new JCheckBoxMenuItem("Zero Start Vel & Acc", true);
+		zeroStart.addActionListener(this);
+		bar.add(zeroStart);
+		zeroEnd = new JCheckBoxMenuItem("Zero End Vel & Acc", true);
+		zeroEnd.addActionListener(this);
+		bar.add(zeroEnd);
 		
 		panel = new OfflineProfileGeneratorPanel();
 		add(panel);
@@ -69,6 +77,12 @@ public class OfflineProfileGeneratorFrame extends JFrame implements ActionListen
 		}
 		else if(e.getSource() == reverseRotation) {
 			panel.setRotationScale(reverseRotation.isSelected() ? -1 : 1);
+		}
+		else if(e.getSource() == zeroStart) {
+			panel.setZeroStart(zeroStart.isSelected());
+		}
+		else if(e.getSource() == zeroEnd) {
+			panel.setZeroEnd(zeroEnd.isSelected());
 		}
 	}
 }

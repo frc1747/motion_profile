@@ -14,11 +14,14 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	private SingleGraphPanel translationalPanel;
 	private SingleGraphPanel rotationalPanel;
 	
+	private double[][] profileSegments;
 	private double[][] savedTimePoints;
 	private double[][] savedAngularTimePoints;
 
 	private double translationScale;
 	private double rotationScale;
+	private boolean zeroStart;
+	private boolean zeroEnd;
 	
 	public OfflineProfileGeneratorPanel() {
 		setLayout(new GridLayout(2, 1));
@@ -32,12 +35,18 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		
 		translationScale = 1;
 		rotationScale = 1;
+		
+		zeroStart = true;
+		zeroEnd = true;
 	}
 	
 	/**
 	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	 */
 	public void setProfileSetpoints(double[][] profileSegments) {
+		if(profileSegments == null) return;
+		this.profileSegments = profileSegments;
+		
 		double[][] profilePoints = ProfileGenerator.primaryProfileIntegrate(profileSegments, 0);
 		double[] angularProfilePoints = ProfileGenerator.secondaryProfileIntegrate(profileSegments, 1);
 		
@@ -45,11 +54,15 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 				Parameters.V_MAX, Parameters.A_MAX, Parameters.W_WIDTH);
 
 		// Force the max everything at the endpoints of the profile to zero
-		profilePoints[0][1] = 0;
-		profilePoints[0][2] = 0;
-		profilePoints[profilePoints.length-1][1] = 0;
-		profilePoints[profilePoints.length-1][2] = 0;
-		
+		if(zeroStart) {
+			profilePoints[0][1] = 0;
+			profilePoints[0][2] = 0;
+		}
+		if(zeroEnd) {
+			profilePoints[profilePoints.length-1][1] = 0;
+			profilePoints[profilePoints.length-1][2] = 0;
+		}
+			
 		ProfileGenerator.limitVelocities(profilePoints);
 		double[] profileTimes = ProfileGenerator.timesFromPoints(profilePoints);
 		double[][] timePoints = ProfileGenerator.profileFromPoints(profilePoints, profileTimes, Parameters.DT);
@@ -132,5 +145,14 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	}
 	public void setRotationScale(double scale) {
 		rotationScale = scale;
+	}
+
+	public void setZeroStart(boolean zeroStart) {
+		this.zeroStart = zeroStart;
+		setProfileSetpoints(profileSegments);
+	}
+	public void setZeroEnd(boolean zeroEnd) {
+		this.zeroEnd = zeroEnd;
+		setProfileSetpoints(profileSegments);
 	}
 }
