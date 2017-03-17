@@ -102,18 +102,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 				timePoints.length * Parameters.DT);
 		
 		// Save the points so outputting can be done on them later
-		// Flipping position and acceleration for compatibility
-		savedTimePoints = new double[timePoints.length][3];
-		savedAngularTimePoints = new double[angularTimePoints.length][3];
-		for(int i = 0;i < timePoints.length;i++) {
-			savedTimePoints[i][0] = timePoints[i][2];
-			savedTimePoints[i][1] = timePoints[i][1];
-			savedTimePoints[i][2] = timePoints[i][0];
-			
-			savedAngularTimePoints[i][0] = angularTimePoints[i][2];
-			savedAngularTimePoints[i][1] = angularTimePoints[i][1];
-			savedAngularTimePoints[i][2] = angularTimePoints[i][0];
-		}
+		savedTimePoints = timePoints;
+		savedAngularTimePoints = angularTimePoints;
 		
 		repaint();
 	}
