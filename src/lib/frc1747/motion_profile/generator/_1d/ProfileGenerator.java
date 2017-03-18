@@ -4,7 +4,7 @@ import lib.frc1747.motion_profile.Util;
 
 /**
  * Contains several utility methods to time parameterize profiles 
- * @author Tiger
+ * @author Tiger Huang
  *
  */
 public class ProfileGenerator {
@@ -12,11 +12,12 @@ public class ProfileGenerator {
 	/**
 	 * Integrates the differences of the profile segments to get the location at each
 	 * time instant. Puts it in the correct format for later methods if this is the primary motion profile.
-	 * @param profileSegments - a list of distance differences<br>
+	 * 
+	 * @param profileSegments a list of distance differences<br>
 	 * The format is [x0, y0, ...; x1, y1, ...; ...]
-	 * @param index - which column contains the profile data
+	 * @param index which column contains the profile data (in the example above, 0-&gt;x column, 1-&gt;y column)
 	 * @return a list of locations at each time<br>
-	 * The format is [x0, 0, 0; x1, 0, 0; ...]
+	 * The format is [q0, 0, 0; q1, 0, 0; ...]
 	 */
 	public static double[][] primaryProfileIntegrate(double[][] profileSegments, int index) {
 		double[][] profilePoints = new double[profileSegments.length+1][3];
@@ -32,9 +33,10 @@ public class ProfileGenerator {
 	/**
 	 * Integrates the differences of the profile segments to get the location at each
 	 * time instant. Puts it in the correct format for later methods if this is the primary motion profile.
-	 * @param profileSegments - a list of distance differences
+	 * 
+	 * @param profileSegments a list of distance differences
 	 * @return a list of locations at each time<br>
-	 * The format is [x0, 0, 0; x1, 0, 0; ...]
+	 * The format is [q0, 0, 0; q1, 0, 0; ...]
 	 */
 	public static double[][] primaryProfileIntegrate(double[] profileSegments) {
 		double[][] profilePoints = new double[profileSegments.length+1][3];
@@ -51,10 +53,12 @@ public class ProfileGenerator {
 	 * Integrates the differences of the profile segments to get the location at each
 	 * time instant. Puts it in the correct format for later methods if this is a profile
 	 * that needs to be synchronized with another profile.
-	 * @param profileSegments - a list of distance differences<br>
+	 * 
+	 * @param profileSegments a list of distance differences<br>
 	 * The format is [x0, y0, ...; x1, y1, ...; ...]
-	 * @param index - which column contains the profile data
+	 * @param index which column contains the profile data (in the example above, 0-&gt;x column, 1-&gt;y column)
 	 * @return a list of locations at each time<br>
+	 * The format is [q0, q1, ...]
 	 */
 	public static double[] secondaryProfileIntegrate(double[][] profileSegments, int index) {
 		double[] profilePoints = new double[profileSegments.length+1];
@@ -70,14 +74,15 @@ public class ProfileGenerator {
 	/**
 	 * Calculates the maximum acceleration and velocities for each profile point
 	 * given the profile differences, max linear accelerations and velocities,
-	 * and robot wheel width. Fills in the profilePoints array that is passed in.
-	 * @param profilePoints - the translation distance at each time instant<br>
+	 * and robot wheel width. Fills in the (primary) profilePoints array that is passed in.
+	 * 
+	 * @param profilePoints the translation distance at each time instant<br>
 	 * The format is [x0, v0, a0; x1, v1, a1; ...]
-	 * @param profileSegments - the differences in translation and rotation between each time instant<br>
+	 * @param profileSegments the differences in translation and rotation between each time instant<br>
 	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
-	 * @param vmax - the max velocity in a straight line
-	 * @param amax - the max acceleration in a straight line
-	 * @param wwidth - the track width of the robot
+	 * @param vmax the max velocity in a straight line
+	 * @param amax the max acceleration in a straight line
+	 * @param wwidth the track width of the robot
 	 */
 	public static void skidSteerLimitVelocities(double[][] profilePoints, double[][] profileSegments,
 			double vmax, double amax, double wwidth) {
@@ -120,7 +125,8 @@ public class ProfileGenerator {
 	}
 	
 	/**
-	 * Adjusts the velocities so that the acceleration limits are not violated
+	 * Adjusts the velocities so that the acceleration limits are not violated.
+	 * 
 	 * @param profilePoints - the profile to adjust velocities<br>
 	 * The format is [x0, v0, a0; x1, v1, a1; ...]
 	 */
@@ -183,7 +189,8 @@ public class ProfileGenerator {
 	
 	/**
 	 * Determines the time for each profile waypoint.
-	 * @param profilePoints - the profile waypoints<br>
+	 * 
+	 * @param profilePoints the profile waypoints<br>
 	 * The format is [x0, v0, a0; x1, v1, a1; ...]
 	 * @return the time at each profile waypoint as an array
 	 */
@@ -208,10 +215,11 @@ public class ProfileGenerator {
 
 	/**
 	 * Creates a time parameterized profile from 1D profile waypoints.
-	 * @param profilePoints - the profile waypoints<br>
+	 * 
+	 * @param profilePoints the profile waypoints and limits<br>
 	 * The format is [x0, v0, a0; x1, v1, a1; ...]
-	 * @param profileTimes - the time at each waypoint
-	 * @param dt - the timestep of the time parameterized profile
+	 * @param profileTimes the time at each waypoint
+	 * @param dt the desired timestep of the time parameterized profile
 	 * @return a time parameterized profile<br>
 	 * The format is [x0, v0, a0; x1, v1, a1; ...]
 	 */
@@ -260,11 +268,12 @@ public class ProfileGenerator {
 	
 	/**
 	 * Creates a profile that is synchronized with an existing profile
-	 * @param timePoints - the time parameterized profile
-	 * @param profilePoints - the profile waypoints
-	 * @param profilePoints2 - the profile waypoints to synchronize with the other profile waypoints
-	 * @param profileTimes - the times of the profile waypoints
-	 * @param dt - the timestep the time parameterized profile is
+	 * 
+	 * @param timePoints the existing time parameterized profile
+	 * @param profilePoints the profile waypoints
+	 * @param profilePoints2 the profile waypoints to synchronize with the existing profile waypoints
+	 * @param profileTimes the times of the profile waypoints
+	 * @param dt the timestep of the time parameterized profile
 	 * @return the time parameterized second profile
 	 */
 	public static double[][] synchronizedProfileFromProfile(double[][] timePoints,

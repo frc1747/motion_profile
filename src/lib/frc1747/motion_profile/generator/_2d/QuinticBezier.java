@@ -1,13 +1,15 @@
-/**
- * @author Tiger
- */
-
 package lib.frc1747.motion_profile.generator._2d;
 
 import lib.frc1747.motion_profile.Util;
 
-// Partially based off of the article:
-// Planning Motion Trajectories for Mobile Robots Using Splines by Christoph Sprunk
+/**
+ * A quintic bezier class used for generating splines with C2 continuity.
+ * 
+ * Concepts taken from the article
+ * "Planning Motion Trajectories for Mobile Robots Using Splines" by Christoph Sprunk
+ * @author Tiger Huang
+ *
+ */
 public class QuinticBezier {
 	//Control points
 	private double x0, y0;
@@ -33,6 +35,13 @@ public class QuinticBezier {
 	private double cyt1;
 	private double cyt0;
 	
+	/**
+	 * Creates a QuinticBezier from the specified waypoints.
+	 * 
+	 * @param w1 the first waypoint
+	 * @param w2 the first waypoint
+	 * @param reverse if this QuinticBezier should be traversed backwards by the robot
+	 */
 	public QuinticBezier(Waypoint w1, Waypoint w2, boolean reverse) {
 		x0 = w1.x;
 		y0 = w1.y;
@@ -59,7 +68,8 @@ public class QuinticBezier {
 
 	/**
 	 * Returns the specified number of position samples from this curve.
-	 * @param samples - The number of segments to sample
+	 * 
+	 * @param samples The number of segments to sample
 	 * @return An array of samples+1 points<br>
 	 * The points are arranged as [x0, y0, x1, y1, ...]
 	 */
@@ -76,7 +86,8 @@ public class QuinticBezier {
 	
 	/**
 	 * Returns the total arc length of this curve.
-	 * @param samples - The number of segments to sample
+	 * 
+	 * @param samples The number of segments to sample
 	 * @return The total length of the curve
 	 */
 	public double uniformTimeArcLength(int samples) {
@@ -94,7 +105,8 @@ public class QuinticBezier {
 	
 	/**
 	 * Returns an array containing corresponding times and arc positions.
-	 * @param samples - The number of segments to sample
+	 * 
+	 * @param samples The number of segments to sample
 	 * @return An array associating times and arc positions<br>
 	 * The format is [t0, s0; t1, s1; ...]
 	 */
@@ -119,8 +131,9 @@ public class QuinticBezier {
 
 	/**
 	 * Flattens the 2D profile into a 1D profile that is parameterized for arc length.
-	 * @param timeSampleCount - The number of equal time segments to initially estimate
-	 * @param sampleLength - The target arc length of the output segments
+	 * 
+	 * @param timeSampleCount The number of equal time segments to initially estimate
+	 * @param sampleLength The target arc length of the output segments
 	 * @return A flattened profile in the form delta arc length and delta theta.<br>
 	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	 */
@@ -185,7 +198,9 @@ public class QuinticBezier {
 		return output;
 	}
 	
-	// Calculate coefficients from control points
+	/**
+	 * Precomputes the polynomial used for generating position and derivatives from the control points.
+	 */
 	public void calculateCoefficients() {
 		cxt5 = -x0 + 5*x1 - 10*x2 + 10*x3 - 5*x4 + x5;
 		cxt4 = 5*x0 - 20*x1 + 30*x2 - 20*x3 + 5*x4;
@@ -202,7 +217,12 @@ public class QuinticBezier {
 		cyt0 = y0;
 	}
 
-	// Point
+	/**
+	 * Gets the x position at arc parameter t.
+	 * 
+	 * @param t The position along the arc where 0 &#8804; t &#8804; 1
+	 * @return the x position
+	 */
 	public double getPX(double t) {
 		return
 			cxt5 * t * t * t * t * t +
@@ -212,6 +232,13 @@ public class QuinticBezier {
 			cxt1 * t +
 			cxt0;
 	}
+	
+	/**
+	 * Gets the y position at arc parameter t.
+	 * 
+	 * @param t The position along the arc where 0 &#8804; t &#8804; 1
+	 * @return the y position
+	 */
 	public double getPY(double t) {
 		return
 			cyt5 * t * t * t * t * t +
@@ -221,8 +248,13 @@ public class QuinticBezier {
 			cyt1 * t +
 			cyt0;
 	}
-	
-	//1st derivative
+
+	/**
+	 * Gets the first derivative of x position at arc parameter t.
+	 * 
+	 * @param t The position along the arc where 0 &#8804; t &#8804; 1
+	 * @return the first derivative of x position
+	 */
 	public double getDX(double t) {
 		return
 			5 * cxt5 * t * t * t * t +
@@ -231,6 +263,13 @@ public class QuinticBezier {
 			2 * cxt2 * t +
 			    cxt1;
 	}
+	
+	/**
+	 * Gets the first derivative of y position at arc parameter t.
+	 * 
+	 * @param t The position along the arc where 0 &#8804; t &#8804; 1
+	 * @return the first derivative of y position
+	 */
 	public double getDY(double t) {
 		return
 			5 * cyt5 * t * t * t * t +
@@ -239,8 +278,13 @@ public class QuinticBezier {
 			2 * cyt2 * t +
 			    cyt1;
 	}
-	
-	//2nd derivative
+
+	/**
+	 * Gets the second derivative of x position at arc parameter t.
+	 * 
+	 * @param t The position along the arc where 0 &#8804; t &#8804; 1
+	 * @return the second derivative of x position
+	 */
 	public double getDDX(double t) {
 		return
 			20 * cxt5 * t * t * t +
@@ -248,6 +292,13 @@ public class QuinticBezier {
 			3  * cxt3 * t +
 			2  * cxt2;
 	}
+	
+	/**
+	 * Gets the second derivative of y position at arc parameter t.
+	 * 
+	 * @param t The position along the arc where 0 &#8804; t &#8804; 1
+	 * @return the second derivative of y position
+	 */
 	public double getDDY(double t) {
 		return
 			20 * cyt5 * t * t * t +
@@ -256,8 +307,12 @@ public class QuinticBezier {
 			2  * cyt2;
 	}
 	
-	// Calculates the current heading
-	// Normalized from -PI to PI
+	/**
+	 * Gets the heading at arc parameter t.
+	 * 
+	 * @param t The position along the arc where 0 &#8804; t &#8804; 1
+	 * @return the heading (normalized so -PI &#8804; heading &#8804; PI)
+	 */
 	public double getHeading(double t) {
 		double theta = Math.atan2(getDY(t), getDX(t)) + Math.PI/2;
 		if(theta < -Math.PI) theta += Math.PI * 2;
@@ -265,8 +320,14 @@ public class QuinticBezier {
 		return theta;
 	}
 	
-	// Parametric curvature
-	// http://mathworld.wolfram.com/Curvature.html
+	/**
+	 * Gets the curvature at arc parameter t.
+	 * 
+	 * Code derived from http://mathworld.wolfram.com/Curvature.html
+	 * 
+	 * @param t The position along the arc where 0 &#8804; t &#8804; 1
+	 * @return the curvature
+	 */
 	public double getCurvature(double t) {
 		double dx = getDX(t);
 		double dy = getDY(t);

@@ -9,17 +9,24 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JRadioButtonMenuItem;
 
+/**
+ * The frame that contains the 1D profile generation panel.
+ * 
+ * @author Tiger Huang
+ *
+ */
 public class OfflineProfileGeneratorFrame extends JFrame implements ActionListener {
-	OfflineProfileGeneratorPanel panel;
-	JMenuBar bar;
-	JMenuItem saveProfile;
-	JCheckBoxMenuItem reverseTranslation;
-	JCheckBoxMenuItem reverseRotation;
-	JCheckBoxMenuItem zeroStart;
-	JCheckBoxMenuItem zeroEnd;
-	JFileChooser chooser;
+	private static final long serialVersionUID = 8646448693894093685L;
+	
+	private OfflineProfileGeneratorPanel panel;
+	private JMenuBar bar;
+	private JMenuItem saveProfile;
+	private JCheckBoxMenuItem reverseTranslation;
+	private JCheckBoxMenuItem reverseRotation;
+	private JCheckBoxMenuItem zeroStart;
+	private JCheckBoxMenuItem zeroEnd;
+	private JFileChooser chooser;
 	
 	public OfflineProfileGeneratorFrame() {
 		chooser = new JFileChooser();

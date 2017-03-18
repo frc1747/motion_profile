@@ -1,7 +1,3 @@
-/**
- * @author Tiger
- */
-
 package lib.frc1747.motion_profile.gui._2d;
 
 import java.awt.event.ActionEvent;
@@ -11,23 +7,31 @@ import java.io.File;
 import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 
 import lib.frc1747.motion_profile.gui._1d.OfflineProfileGeneratorFrame;
 
+/**
+ * A Frame that contains the panel that processes 2D splines.
+ * 
+ * @author Tiger Huang
+ *
+ */
 public class OfflineSplineGeneratorFrame extends JFrame implements ActionListener {
-	OfflineSplineGeneratorPanel panel;
-	JMenuBar bar;
-	JRadioButtonMenuItem addPoint;
-	JRadioButtonMenuItem editPoint;
-	JRadioButtonMenuItem deletePoint;
-	JMenuItem saveWaypoints;
-	JMenuItem openWaypoints;
-	ButtonGroup modeGroup;
-	JFileChooser chooser;
+	private static final long serialVersionUID = 7436504607369102953L;
+	
+	private OfflineSplineGeneratorPanel panel;
+	private JMenuBar bar;
+	private JRadioButtonMenuItem addPoint;
+	private JRadioButtonMenuItem editPoint;
+	private JRadioButtonMenuItem deletePoint;
+	private JMenuItem saveWaypoints;
+	private JMenuItem openWaypoints;
+	private ButtonGroup modeGroup;
+	private JFileChooser chooser;
+	
 	public OfflineSplineGeneratorFrame() {
 		chooser = new JFileChooser();
 		chooser.setCurrentDirectory(new File  

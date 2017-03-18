@@ -10,7 +10,15 @@ import javax.swing.JPanel;
 import lib.frc1747.motion_profile.Parameters;
 import lib.frc1747.motion_profile.generator._1d.ProfileGenerator;
 
+/**
+ * Panel that processes the 1D profile.
+ * 
+ * @author Tiger Huang
+ *
+ */
 public class OfflineProfileGeneratorPanel extends JPanel {
+	private static final long serialVersionUID = -5008093073004362148L;
+	
 	private SingleGraphPanel translationalPanel;
 	private SingleGraphPanel rotationalPanel;
 	
@@ -40,9 +48,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		zeroEnd = true;
 	}
 	
-	/**
-	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
-	 */
+	
+	// The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	public void setProfileSetpoints(double[][] profileSegments) {
 		if(profileSegments == null) return;
 		this.profileSegments = profileSegments;

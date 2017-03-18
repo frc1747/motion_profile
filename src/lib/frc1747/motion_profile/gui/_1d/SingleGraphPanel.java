@@ -8,7 +8,15 @@ import java.awt.Graphics2D;
 
 import javax.swing.JPanel;
 
+/**
+ * Panel that displays the position, velocity, and acceleration of one component of the motion (translational, rotational).
+ * 
+ * @author Tiger Huang
+ *
+ */
 public class SingleGraphPanel extends JPanel {
+	private static final long serialVersionUID = -308204385892576695L;
+	
 	private String title;
 	private int fontSize = 14;
 	private double[][] profile;

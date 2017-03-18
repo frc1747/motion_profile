@@ -1,7 +1,3 @@
-/**
- * @author Tiger
- */
-
 package lib.frc1747.motion_profile.gui._2d;
 
 import java.awt.Color;
@@ -30,39 +26,47 @@ import lib.frc1747.motion_profile.generator._2d.SplineGenerator;
 import lib.frc1747.motion_profile.generator._2d.Waypoint;
 import lib.frc1747.motion_profile.gui._1d.OfflineProfileGeneratorPanel;
 
+/**
+ * A panel that processes a 2D spline into two 1D profiles.
+ * 
+ * @author Tiger Huang
+ *
+ */
 public class OfflineSplineGeneratorPanel
 		extends JPanel
 		implements MouseListener, MouseMotionListener, MouseWheelListener {
+	private static final long serialVersionUID = 1827558855639048779L;
+	
 	//Global draw scale
-	double scale;		// px/ft
+	private double scale;		// px/ft
 	//Global grid spacing
-	double spacing;		// ft
+	private double spacing;		// ft
 	//Everything drawn is offset by this vector
-	double offx;		// ft
-	double offy;		// ft
+	private double offx;		// ft
+	private double offy;		// ft
 	//UI parameters
-	double scrollRatio = 0.8;
-	int widgetSize = 20;
-	double v_scale = 0.5;
-	double a_scale = 0.2;
+	private double scrollRatio = 0.8;
+	private int widgetSize = 20;
+	private double v_scale = 0.5;
+	private double a_scale = 0.2;
 	
 	//Click pan location
-	int panClickX;
-	int panClickY;
+	private int panClickX;
+	private int panClickY;
 	
 	//Click edit index
-	int editIndex;
+	private int editIndex;
 	
 	//Current mode
-	EditMode editMode;
-	EditMode prevMode;
+	private EditMode editMode;
+	private EditMode prevMode;
 	
 	//Waypoints
-	ArrayList<Waypoint> waypoints;
-	QuinticBezier splines[];
+	private ArrayList<Waypoint> waypoints;
+	private QuinticBezier splines[];
 	
 	//Output consumer
-	OfflineProfileGeneratorPanel profilePanel;
+	private OfflineProfileGeneratorPanel profilePanel;
 	
 	public OfflineSplineGeneratorPanel() {
 		//Display variables
@@ -439,6 +443,7 @@ public class OfflineSplineGeneratorPanel
 					waypoints.add(waypoint);
 				}
 			}
+			reader.close();
 			repaint();
 		}
 		catch (IOException ex) {

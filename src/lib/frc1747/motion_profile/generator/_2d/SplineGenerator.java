@@ -2,13 +2,15 @@ package lib.frc1747.motion_profile.generator._2d;
 
 /**
  * Contains several utility methods for converting waypoints (2d) into profiles.
- * @author Tiger
+ * 
+ * @author Tiger Huang
  *
  */
 public class SplineGenerator {
 	/**
 	 * Creates a list of QuinticBeziers from a list of waypoints.
-	 * @param waypoints - an array of waypoints to use
+	 * 
+	 * @param waypoints an array of waypoints to use
 	 * @return an array of QuinticBeziers that satisfies the waypoints
 	 */
 	public static QuinticBezier[] splinesFromWaypoints(Waypoint[] waypoints) {
@@ -27,7 +29,10 @@ public class SplineGenerator {
 
 	/**
 	 * Flattens a list of QuinticBeziers into a list of differences of distance and rotation.
-	 * @param splines - an array of QuinticBeziers to flatten
+	 * 
+	 * @param splines an array of QuinticBeziers to flatten
+	 * @param initial_sample_count the number of sample to take when finding the arc length 
+	 * @param initial_sample_length the delta arc length the output should be separated by
 	 * @return an array containing differences of distance and rotation<br>
 	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	 */
@@ -56,12 +61,13 @@ public class SplineGenerator {
 	
 	/**
 	 * Creates a profile based on mostly independent translational and rotational movements.
-	 * Probably gets messed up on larger rotations.
-	 * @param s0 - Initial position
-	 * @param a0 - Initial rotation
-	 * @param s1 - Final position
-	 * @param a1 - Final rotation
-	 * @param sampleLength - the target length of each segment
+	 * Be cautious when using with larger rotations because the robot will drive an arc.
+	 * 
+	 * @param s0 Initial position
+	 * @param a0 Initial rotation
+	 * @param s1 Final position
+	 * @param a1 Final rotation
+	 * @param sampleLength the target length of each segment
 	 * @return an array containing differences of distance and rotation<br>
 	 * The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	 */
