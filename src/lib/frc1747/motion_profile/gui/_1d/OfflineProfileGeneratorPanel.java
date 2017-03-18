@@ -112,7 +112,7 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		if(savedTimePoints != null) {
 			try {
 				PrintWriter writer = new PrintWriter(file);
-				writer.println(savedTimePoints.length);
+				writer.format("%d, %d\n", 2, savedTimePoints.length);
 				for(int i = 0;i < savedTimePoints.length;i++) {
 					writer.format("%.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n",
 							translationScale * savedTimePoints[i][0],
