@@ -1,6 +1,5 @@
 package lib.frc1747.motion_profile.generator._2d;
 
-import java.awt.Color;
 import java.awt.Polygon;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
