@@ -114,14 +114,12 @@ public class ProfileGenerator {
 		}
 		
 		// Adjust the max velocities and accelerations so they fall on the points
-		profilePoints[profilePoints.length-1][1] = profilePoints[profilePoints.length-2][1]/2;
-		profilePoints[profilePoints.length-1][2] = profilePoints[profilePoints.length-2][2]/2;
+		profilePoints[profilePoints.length-1][1] = profilePoints[profilePoints.length-2][1];
+		profilePoints[profilePoints.length-1][2] = profilePoints[profilePoints.length-2][2];
 		for(int i = profilePoints.length-2;i >= 1;i--) {
 			profilePoints[i][1] = (profilePoints[i][1] + profilePoints[i-1][1])/2;
 			profilePoints[i][2] = (profilePoints[i][2] + profilePoints[i-1][2])/2;
 		}
-		profilePoints[0][1] /= 2;
-		profilePoints[0][2] /= 2;
 	}
 	
 	/**
