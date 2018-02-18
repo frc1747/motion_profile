@@ -15,27 +15,27 @@ public class Parameters {
 	/**
 	 * Maximum velocity (ft/s)
 	 */
-	public static final double V_MAX = 7;
+	public static final double V_MAX = 14;
 	/**
 	 * Maximum acceleration (ft/s^2)
 	 */
-	public static final double A_MAX = 30;
+	public static final double A_MAX = 20;
 	/**
 	 * Maximum jerk (ft/s^3)
 	 */
-	public static final double J_MAX = 160;
+	public static final double J_MAX = 26;
 	/**
 	 * The wheelbase width (the width between the wheels) (ft)
 	 */
-	public static final double W_WIDTH = 2.1;
+	public static final double W_WIDTH = 2.1 * 1;
 	/**
 	 * The robot bumper width (ft)
 	 */
-	public static final double R_WIDTH = 2.7;
+	public static final double R_WIDTH = 2.6;
 	/**
 	 * The robot bumper length (ft)
 	 */
-	public static final double R_LENGTH = 2.7;
+	public static final double R_LENGTH = 3.1;
 	/**
 	 * The timestep to use (s)
 	 */
