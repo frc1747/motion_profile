@@ -27,7 +27,7 @@ public class Parameters {
 	/**
 	 * The wheelbase width (the width between the wheels) (ft)
 	 */
-	public static final double W_WIDTH = 2.1 * 1;
+	public static final double W_WIDTH = 2.1;
 	/**
 	 * The robot bumper width (ft)
 	 */

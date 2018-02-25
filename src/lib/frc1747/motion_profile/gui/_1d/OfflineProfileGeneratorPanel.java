@@ -21,7 +21,8 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	
 	private SingleGraphPanel translationalPanel;
 	private SingleGraphPanel rotationalPanel;
-	
+
+	private double[][] waypointLimits;
 	private double[][] profileSegments;
 	private double[][] savedTimePoints;
 	private double[][] savedAngularTimePoints;
@@ -30,6 +31,16 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 	private double rotationScale;
 	private boolean zeroStart;
 	private boolean zeroEnd;
+	
+	public double v_max;
+	public double a_max;
+	public double j_max;
+	public double w_width;
+	public double r_width;
+	public double r_length;
+	public double dt;
+	public int i_sample_count;
+	public double i_sample_length;
 	
 	public OfflineProfileGeneratorPanel() {
 		setLayout(new GridLayout(2, 1));
@@ -46,8 +57,23 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		
 		zeroStart = true;
 		zeroEnd = true;
+
+		v_max = Parameters.V_MAX;
+		a_max = Parameters.A_MAX;
+		j_max = Parameters.J_MAX;
+		w_width = Parameters.W_WIDTH;
+		r_width = Parameters.R_WIDTH;
+		r_length = Parameters.R_LENGTH;
+		dt = Parameters.DT;
+		i_sample_count = Parameters.I_SAMPLE_COUNT;
+		i_sample_length = Parameters.I_SAMPLE_LENGTH;
 	}
 	
+	// The format is [s0, m_sv0, m_sa0, m_av0, m_aa0; s1, m_sv1, m_sa1, m_av1, m_aa1; ...] 
+	public void setWaypointLimits(double[][] waypointLimits) {
+		if(waypointLimits == null) return;
+		this.waypointLimits = waypointLimits;
+	}
 	
 	// The format is [ds0, dtheta0; ds1, dtheta1; ...]
 	public void setProfileSetpoints(double[][] profileSegments) {
@@ -58,7 +84,20 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		double[] angularProfilePoints = ProfileGenerator.secondaryProfileIntegrate(profileSegments, 1);
 		
 		ProfileGenerator.skidSteerLimitVelocities(profilePoints, profileSegments,
-				Parameters.V_MAX, Parameters.A_MAX, Parameters.W_WIDTH);
+				this.v_max, this.a_max, this.w_width);
+
+		// Apply per point limits
+		for(int i = 0, j = 0;i < profilePoints.length && j < waypointLimits.length;i++) {
+			if(Math.abs(waypointLimits[j][0] - profilePoints[i][0]) < 1E-3) {
+				if(Math.abs(waypointLimits[j][1]) < 1E3) {
+					profilePoints[i][1] = waypointLimits[j][1];
+				}
+				if(Math.abs(waypointLimits[j][2]) < 1E3) {
+					profilePoints[i][2] = waypointLimits[j][2];
+				}
+				j++;
+			}
+		}
 
 		// Force the max everything at the endpoints of the profile to zero
 		if(zeroStart) {
@@ -72,12 +111,12 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 			
 		ProfileGenerator.limitVelocities(profilePoints);
 		double[] profileTimes = ProfileGenerator.timesFromPoints(profilePoints);
-		double[][] timePoints = ProfileGenerator.profileFromPoints(profilePoints, profileTimes, Parameters.DT);
+		double[][] timePoints = ProfileGenerator.profileFromPoints(profilePoints, profileTimes, this.dt);
 		double[][] angularTimePoints = ProfileGenerator.synchronizedProfileFromProfile(timePoints,
 				profilePoints,
 				angularProfilePoints,
 				profileTimes,
-				Parameters.DT);
+				this.dt);
 		
 		// Calculate the maximum distance and rotation so it can be displayed
 		double xmax = 0;
@@ -92,21 +131,21 @@ public class OfflineProfileGeneratorPanel extends JPanel {
 		}
 		
 		// Limit the maximum jerk
-		double jerkFilterTime = Parameters.A_MAX/Parameters.J_MAX;
-		timePoints = BoxcarFilter.multiFilter(timePoints, (int)Math.ceil(jerkFilterTime/Parameters.DT));
-		angularTimePoints = BoxcarFilter.multiFilter(angularTimePoints, (int)Math.ceil(jerkFilterTime/Parameters.DT));
+		double jerkFilterTime = this.a_max/this.j_max;
+		timePoints = BoxcarFilter.multiFilter(timePoints, (int)Math.ceil(jerkFilterTime/this.dt));
+		angularTimePoints = BoxcarFilter.multiFilter(angularTimePoints, (int)Math.ceil(jerkFilterTime/this.dt));
 		
 		// Display the two profiles
-		translationalPanel.setProfile(timePoints, Parameters.DT,
-				Parameters.A_MAX,
-				Parameters.V_MAX,
+		translationalPanel.setProfile(timePoints, this.dt,
+				this.a_max,
+				this.v_max,
 				xmax,
-				timePoints.length * Parameters.DT);
-		rotationalPanel.setProfile(angularTimePoints, Parameters.DT,
-				Parameters.A_MAX/Parameters.W_WIDTH*2,
-				Parameters.V_MAX/Parameters.W_WIDTH*2,
+				timePoints.length * this.dt);
+		rotationalPanel.setProfile(angularTimePoints, this.dt,
+				this.a_max/this.w_width*2,
+				this.v_max/this.w_width*2,
 				axmax,
-				timePoints.length * Parameters.DT);
+				timePoints.length * this.dt);
 		
 		// Save the points so outputting can be done on them later
 		savedTimePoints = timePoints;

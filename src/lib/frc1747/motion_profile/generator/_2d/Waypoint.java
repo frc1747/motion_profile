@@ -42,6 +42,22 @@ public class Waypoint {
 	 * The magnitude of the acceleration vector (ft/s^2)
 	 */
 	public double a_m;
+	/**
+	 * The maximum linear velocity
+	 */
+	public double m_sv;
+	/**
+	 * The maximum linear acceleration
+	 */
+	public double m_sa;
+	/**
+	 * The maximum angular velocity
+	 */
+	public double m_av;
+	/**
+	 * The maximum angular acceleration
+	 */
+	public double m_aa;
 	
 	/**
 	 * If the QuinticBezier immediately following this waypoint should be traveled in reverse or not.
@@ -63,6 +79,10 @@ public class Waypoint {
 		v_m = 0;
 		a_t = 0;
 		a_m = 0;
+		m_sv = 0;
+		m_sa = 0;
+		m_av = 0;
+		m_aa = 0;
 		reverse = false;
 	}
 	

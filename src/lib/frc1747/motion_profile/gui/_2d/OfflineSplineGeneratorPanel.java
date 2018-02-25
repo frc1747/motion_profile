@@ -20,7 +20,6 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-import lib.frc1747.motion_profile.Parameters;
 import lib.frc1747.motion_profile.generator._2d.QuinticBezier;
 import lib.frc1747.motion_profile.generator._2d.SplineGenerator;
 import lib.frc1747.motion_profile.generator._2d.Waypoint;
@@ -93,12 +92,22 @@ public class OfflineSplineGeneratorPanel
 		if(waypoints.size() >= 2) {
 			splines = SplineGenerator.splinesFromWaypoints(
 					waypoints.toArray(new Waypoint[0]));
-			
-			double[][] profileSetpoints = SplineGenerator.flattenProfile(splines,
-					Parameters.I_SAMPLE_COUNT, Parameters.I_SAMPLE_LENGTH);
-			if(profilePanel != null) {
-				profilePanel.setProfileSetpoints(profileSetpoints);
+			double[][] waypointLimits = new double[splines.length+1][5];
+			for(int i = 0;i < waypointLimits.length;i++) {
+				waypointLimits[i][1] = waypoints.get(i).m_sv;
+				waypointLimits[i][2] = waypoints.get(i).m_sa;
+				waypointLimits[i][3] = waypoints.get(i).m_av;
+				waypointLimits[i][4] = waypoints.get(i).m_aa;
 			}
+			waypointLimits[0][0] = 0;
+			for(int i = 1;i < waypointLimits.length;i++) {
+				waypointLimits[i][0] = waypointLimits[i-1][0] +
+						splines[i-1].uniformTimeArcLength(profilePanel.i_sample_count) * (waypoints.get(i-1).reverse ? -1 : 1);
+			}
+			profilePanel.setWaypointLimits(waypointLimits);
+			double[][] profileSetpoints = SplineGenerator.flattenProfile(splines,
+					profilePanel.i_sample_count, profilePanel.i_sample_length);
+			profilePanel.setProfileSetpoints(profileSetpoints);
 		}
 		else {
 			splines = null;
@@ -337,6 +346,10 @@ public class OfflineSplineGeneratorPanel
 				waypoint.v_m = 2;
 				waypoint.a_t = -Math.PI/2;
 				waypoint.a_m = 5;
+				waypoint.m_sv = 1E6;
+				waypoint.m_sa = 1E6;
+				waypoint.m_av = 1E6;
+				waypoint.m_aa = 1E6;
 				if(waypoints.size() >= 1) {
 					waypoint.reverse = waypoints.get(waypoints.size() - 1).reverse;
 				}
@@ -386,7 +399,7 @@ public class OfflineSplineGeneratorPanel
 			if(inside)	setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 			else		cursorModeDefault();
 		}
-		
+
 		repaint();
 	}
 
@@ -409,15 +422,33 @@ public class OfflineSplineGeneratorPanel
 	public void saveWaypoints(File file) {
 		try {
 			PrintWriter writer = new PrintWriter(file);
+			writer.println("-, Max Velocity, Max Acceleration, Max Jerk, Wheelbase Width, "
+					+ "External Width, External Length, Timestep, I Sample Count, I Sample Length");
+			writer.format("Parameters, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %d, %.4f\n",
+					profilePanel.v_max,
+					profilePanel.a_max,
+					profilePanel.j_max,
+					profilePanel.w_width,
+					profilePanel.r_width,
+					profilePanel.r_length,
+					profilePanel.dt,
+					profilePanel.i_sample_count,
+					profilePanel.i_sample_length);
+			writer.println("-, X, Y, Velocity Angle, Velocity Magnitude, Acceleration Angle, Acceleration Magnitude, "
+					+ "Max Linear Velocity, Max Linear Acceleration, Max Angular Velocity, Max Angular Acceleration");
 			for(int i = 0;i < waypoints.size();i++) {
 				Waypoint waypoint = waypoints.get(i);
-				writer.format("%.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n",
+				writer.format("%.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f, %.4f\n",
 						waypoint.x,
 						waypoint.y,
 						waypoint.v_t,
 						waypoint.v_m,
 						waypoint.a_t,
-						waypoint.a_m);
+						waypoint.a_m,
+						waypoint.m_sv,
+						waypoint.m_sa,
+						waypoint.m_av,
+						waypoint.m_aa);
 			}
 			writer.close();
 		}
@@ -433,17 +464,44 @@ public class OfflineSplineGeneratorPanel
 			while((line = reader.readLine()) != null) {
 				if(!line.isEmpty()) {
 					String[] parts = line.split(",");
-					Waypoint waypoint = new Waypoint();
-					waypoint.x = Double.parseDouble(parts[0].trim());
-					waypoint.y = Double.parseDouble(parts[1].trim());
-					waypoint.v_t = Double.parseDouble(parts[2].trim());
-					waypoint.v_m = Double.parseDouble(parts[3].trim());
-					waypoint.a_t = Double.parseDouble(parts[4].trim());
-					waypoint.a_m = Double.parseDouble(parts[5].trim());
-					waypoints.add(waypoint);
+					if(parts[0].equals("Parameters")) {
+						profilePanel.v_max = Double.parseDouble(parts[1].trim());
+						profilePanel.a_max = Double.parseDouble(parts[2].trim());
+						profilePanel.j_max = Double.parseDouble(parts[3].trim());
+						profilePanel.w_width = Double.parseDouble(parts[4].trim());
+						profilePanel.r_width = Double.parseDouble(parts[5].trim());
+						profilePanel.r_length = Double.parseDouble(parts[6].trim());
+						profilePanel.dt = Double.parseDouble(parts[7].trim());
+						profilePanel.i_sample_count = Integer.parseInt(parts[8].trim());
+						profilePanel.i_sample_length = Double.parseDouble(parts[9].trim());
+					}
+					else if(parts[0].equals("-")) {}
+					else {
+						Waypoint waypoint = new Waypoint();
+						waypoint.x = Double.parseDouble(parts[0].trim());
+						waypoint.y = Double.parseDouble(parts[1].trim());
+						waypoint.v_t = Double.parseDouble(parts[2].trim());
+						waypoint.v_m = Double.parseDouble(parts[3].trim());
+						waypoint.a_t = Double.parseDouble(parts[4].trim());
+						waypoint.a_m = Double.parseDouble(parts[5].trim());
+						if(parts.length >= 10) {
+							waypoint.m_sv = Double.parseDouble(parts[6].trim());
+							waypoint.m_sa = Double.parseDouble(parts[7].trim());
+							waypoint.m_av = Double.parseDouble(parts[8].trim());
+							waypoint.m_aa = Double.parseDouble(parts[9].trim());
+						}
+						else {
+							waypoint.m_sv = 1E6;
+							waypoint.m_sa = 1E6;
+							waypoint.m_av = 1E6;
+							waypoint.m_aa = 1E6;
+						}
+						waypoints.add(waypoint);
+					}
 				}
 			}
 			reader.close();
+			recalculateSplines();
 			repaint();
 		}
 		catch (IOException ex) {
