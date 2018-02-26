@@ -408,7 +408,11 @@ public class OfflineSplineGeneratorPanel
 		//Scale the view and move it so the scale center is the mouse
 		double posx = (e.getX() - getWidth()/2)/scale - offx;
 		double posy = -(e.getY() - getHeight()/2)/scale - offy;
+		double old_scale = scale;
 		scale *= Math.pow(scrollRatio, -e.getPreciseWheelRotation());
+		if(scale < 10) {
+			scale = old_scale;
+		}
 		offx = (e.getX() - getWidth()/2)/scale - posx;
 		offy = -(e.getY() - getHeight()/2)/scale - posy;
 		
