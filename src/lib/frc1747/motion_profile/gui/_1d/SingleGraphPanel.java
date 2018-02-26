@@ -5,6 +5,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 import javax.swing.JPanel;
 
@@ -51,6 +52,7 @@ public class SingleGraphPanel extends JPanel {
 	@Override
 	public void paintComponent(Graphics g2) {
 		Graphics2D g = (Graphics2D)g2;
+		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		//Temp get width and height
 		int width = getWidth();
 		int height = getHeight();
@@ -78,13 +80,13 @@ public class SingleGraphPanel extends JPanel {
 			//Draw the labels for the axis maximums
 			g.setColor(Color.BLACK);
 			g.drawString(
-					String.format("±%.2f %s", xmax, xUnit),
+					String.format("\u00B1%.2f %s", xmax, xUnit),
 					2, fontSize);
 			g.drawString(
-					String.format("±%.2f %s/%s", vmax, xUnit, tUnit), 
+					String.format("\u00B1%.2f %s/%s", vmax, xUnit, tUnit), 
 					2, fontSize * 2);
 			g.drawString(
-					String.format("±%.2f %s/%s²", amax, xUnit, tUnit),
+					String.format("\u00B1%.2f %s/%s\u00B2", amax, xUnit, tUnit),
 					2, fontSize * 3);
 			
 			//Draw the time labels
